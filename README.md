@@ -1,3 +1,7 @@
+Here's a well-structured and engaging README for your app. It will include sections about the app, setup instructions, features, and how to contribute.
+
+---
+
 # MWG Welfare App
 
 Welcome to the **MWG Welfare App**! 🎉 This app is designed to provide family support and facilitate contributions to the MWG community. It's a platform where users can request family support, make contributions, and access resources designed to bring families closer together.
@@ -77,13 +81,13 @@ Before you begin, make sure you have the following installed on your local machi
 ## Screenshots
 
 ### Home Screen
-![Home Screen](h[ttps://your-image-url.com/home-screen.png](https://ik.imagekit.io/candyjess/WhatsApp%20Image%202025-02-12%20at%2012.44.09.jpeg?updatedAt=1739353532019))
+![Home Screen](https://ik.imagekit.io/candyjess/WhatsApp%20Image%202025-02-12%20at%2012.44.09.jpeg?updatedAt=1739353532019)
 
 ### Family Support Page
-![Family Support]([https://your-image-url.com/family-support.png](https://ik.imagekit.io/candyjess/WhatsApp%20Image%202025-02-12%20at%2012.44.09%20(1).jpeg?updatedAt=1739353531773))
+![Family Support](https://ik.imagekit.io/candyjess/WhatsApp%20Image%202025-02-12%20at%2012.44.09%20(1).jpeg?updatedAt=1739353531773)
 
 ### Edit Profile Page
-![Edit Profile]([https://your-image-url.com/edit-profile.png](https://ik.imagekit.io/candyjess/WhatsApp%20Image%202025-02-12%20at%2012.44.09%20(2).jpeg?updatedAt=1739353531555))
+![Edit Profile](https://ik.imagekit.io/candyjess/WhatsApp%20Image%202025-02-12%20at%2012.44.09%20(2).jpeg?updatedAt=1739353531555)
 
 ---
 
@@ -131,3 +135,4 @@ Thank you for using the MWG Welfare App! Let's come together to support our fami
 
 ---
 
+This README covers the basics of the app, its features, setup instructions, and more. Feel free to modify and expand it as needed!
