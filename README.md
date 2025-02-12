@@ -1,7 +1,3 @@
-Here's a well-structured and engaging README for your app. It will include sections about the app, setup instructions, features, and how to contribute.
-
----
-
 # MWG Welfare App
 
 Welcome to the **MWG Welfare App**! 🎉 This app is designed to provide family support and facilitate contributions to the MWG community. It's a platform where users can request family support, make contributions, and access resources designed to bring families closer together.
@@ -135,4 +131,3 @@ Thank you for using the MWG Welfare App! Let's come together to support our fami
 
 ---
 
-This README covers the basics of the app, its features, setup instructions, and more. Feel free to modify and expand it as needed!
