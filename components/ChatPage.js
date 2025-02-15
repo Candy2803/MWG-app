@@ -15,7 +15,6 @@ const ChatPage = () => {
     }
   };
 
-  // If the user is not logged in, show a message instead of the chat
   if (!user) {
     return (
       <View style={styles.container}>
@@ -66,7 +65,7 @@ const styles = StyleSheet.create({
   loginMessage: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#d9534f', // A red color to indicate action is needed
+    color: '#d9534f', 
     textAlign: 'center',
   },
   title: {
