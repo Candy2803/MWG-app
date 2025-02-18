@@ -1,18 +1,29 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { useAuth } from '../Auth/AuthContext';
+import axios from 'axios';
 
 const Signup = ({ navigation }) => {
-  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     if (username && email && phone && password) {
-      login({ username, email, phone });
-      navigation.navigate('Profile');
+      try {
+        const response = await axios.post('http://localhost:5000/api/users/register', {
+          name: username,
+          email: email,
+          phone: phone,
+          password: password,
+        });
+        if (response.status === 201) {
+          alert('Signup successful');
+          navigation.navigate('Profile'); 
+        }
+      } catch (error) {
+        alert('Signup failed: ' + error.response.data.message);
+      }
     } else {
       alert('Please fill all fields');
     }
