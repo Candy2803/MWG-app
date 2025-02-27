@@ -13,7 +13,7 @@ const Login = ({ navigation }) => {
   const handleLogin = async () => {
     if (email && password) {
       try {
-        const response = await axios.post('http://192.168.1.98:5000/api/users/login', {
+        const response = await axios.post('https://mwg-app.vercel.app/login', {
           email,
           password,
         });

@@ -19,7 +19,7 @@ const Contribution = () => {
 
     if (userId) {
       axios
-        .get(`http://192.168.1.98:5000/api/contributions/${userId}/contributions`)
+        .get(`https://mwg-app.vercel.app/${userId}/contributions`)
         .then((response) => {
           setContributions(response.data.contributions);
         })
@@ -53,7 +53,7 @@ const Contribution = () => {
       setSubmitting(true); 
 
       axios
-        .post(`http://192.168.1.98:5000/api/contributions/${userId}/contributions`, {
+        .post(`https://mwg-app.vercel.app/${userId}/contributions`, {
           amount,
           paymentMethod,
         })

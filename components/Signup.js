@@ -19,7 +19,7 @@ const Signup = ({ navigation }) => {
     if (username && email && phone && password) {
       try {
         const response = await axios.post(
-          "http://192.168.1.98:5000/api/users/register",
+          "https://mwg-app.vercel.app/register",
           {
             name: username,
             email: email,

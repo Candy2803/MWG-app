@@ -21,7 +21,7 @@ const ManageContributions = () => {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`http://192.168.1.98:5000/api/contributions/users`)
+      .get(`https://mwg-app.vercel.app/users`)
       .then((response) => {
         setUsers(response.data.users);
         setLoading(false);
@@ -35,7 +35,7 @@ const ManageContributions = () => {
   const fetchUserContributions = (userId) => {
     setLoadingContributions(true);
     axios
-      .get(`http://192.168.1.98:5000/api/contributions/${userId}/contributions`)
+      .get(`https://mwg-app.vercel.app/${userId}/contributions`)
       .then((response) => {
         setUserContributions(response.data.contributions);
         setLoadingContributions(false);
