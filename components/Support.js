@@ -14,6 +14,10 @@ const Support = ({ navigation }) => {
     }
   };
 
+  const handleRequestLoan = () => {
+    navigation.navigate('LoanRequestForm');
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Family Support</Text>
@@ -40,6 +44,13 @@ const Support = ({ navigation }) => {
         </TouchableOpacity>
 
         {status && <Text style={styles.status}>{status}</Text>}
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Request a Loan</Text>
+        <TouchableOpacity style={styles.button} onPress={handleRequestLoan}>
+          <Text style={styles.buttonText}>Go to Loan Request Form</Text>
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>

@@ -17,7 +17,6 @@ const Profile = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={styles.profileContainer}>
-        {/* Profile Image or Icon */}
         {user?.profileImage ? (
           <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
         ) : (
@@ -26,16 +25,14 @@ const Profile = ({ navigation }) => {
           </View>
         )}
 
-        {/* User Information */}
-        <Text style={styles.name}>{user?.username || 'No Username'}</Text>
+        <Text style={styles.name}>{user?.name || 'No Username'}</Text>
         <Text style={styles.email}>{user?.email || 'No Email'}</Text>
+        <Text style={styles.email}>{user?.role || 'No Role'}</Text>
 
-        {/* Edit Profile Button */}
         <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
 
-        {/* Logout Button */}
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>

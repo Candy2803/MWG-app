@@ -1,33 +1,82 @@
-import React, { useState } from 'react';
-import { 
-  View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, TextInput 
-} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { useAuth } from '../Auth/AuthContext';
+import axios from 'axios';
 
 const Contribution = () => {
-  const { user } = useAuth();
+  const { user, isImpersonating, impersonatedUser } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
+  const [contributions, setContributions] = useState([]);
+  const [loading, setLoading] = useState(false); 
+  const [submitting, setSubmitting] = useState(false); 
 
-  const contributions = [
-    { id: '1', date: 'Feb 5, 2025', amount: 'KES 1,500' },
-    { id: '2', date: 'Jan 20, 2025', amount: 'KES 2,000' },
-    { id: '3', date: 'Dec 15, 2024', amount: 'KES 1,000' },
-  ];
+  const fetchContributions = () => {
+    setLoading(true); 
+    const userId = isImpersonating ? impersonatedUser?._id : user?._id;
+    console.log('Fetching contributions for user ID:', userId);
+
+    if (userId) {
+      axios
+        .get(`http://192.168.1.98:5000/api/contributions/${userId}/contributions`)
+        .then((response) => {
+          setContributions(response.data.contributions);
+        })
+        .catch((error) => {
+          console.error('Error fetching contributions:', error.response ? error.response.data : error.message);
+          alert('Failed to fetch contributions');
+        })
+        .finally(() => {
+          setLoading(false);  
+        });
+    }
+  };
+
+  useEffect(() => {
+    fetchContributions();
+  }, [user, impersonatedUser]);
+
+  const calculateTotalContributions = () => {
+    return contributions.reduce((total, contribution) => total + (contribution.amount || 0), 0);
+  };
 
   const handleContribution = () => {
     if (amount && paymentMethod) {
-      alert(`Contribution of ${amount} via ${paymentMethod} submitted!`);
-      setModalVisible(false);
-      setAmount('');
-      setPaymentMethod('');
+      const userId = isImpersonating ? impersonatedUser?._id : user?._id;
+
+      if (!userId) {
+        alert('Error: Unable to retrieve user information.');
+        return;
+      }
+
+      setSubmitting(true); 
+
+      axios
+        .post(`http://192.168.1.98:5000/api/contributions/${userId}/contributions`, {
+          amount,
+          paymentMethod,
+        })
+        .then((response) => {
+          alert(`Contribution of KES ${amount} via ${paymentMethod} submitted!`);
+          setModalVisible(false);
+          setAmount('');
+          setPaymentMethod('');
+          fetchContributions();  
+        })
+        .catch((error) => {
+          console.error('Error submitting contribution:', error.response ? error.response.data : error.message);
+          alert('Failed to submit contribution. Please try again.');
+        })
+        .finally(() => {
+          setSubmitting(false); 
+        });
     } else {
       alert('Please fill all fields.');
     }
   };
 
-  if (!user) {
+  if (!user && !isImpersonating) {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>You must be logged in to view this page.</Text>
@@ -35,23 +84,38 @@ const Contribution = () => {
     );
   }
 
+  const displayName = isImpersonating ? impersonatedUser?.name : user?.name;
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome, {user?.username || 'User'}!</Text>
+      <Text style={styles.title}>
+        {isImpersonating
+          ? `Welcome, ${displayName} (impersonated)`
+          : `Welcome, ${displayName || 'User'}!`}
+      </Text>
 
       <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
         <Text style={styles.buttonText}>Contribute Now</Text>
       </TouchableOpacity>
 
+      <Text style={styles.totalContributions}>
+        Total Contributions: KES {calculateTotalContributions().toFixed(2)}
+      </Text>
+
       <Text style={styles.sectionTitle}>Your Contribution History</Text>
-      {contributions.length > 0 ? (
+      {loading ? (
+        <ActivityIndicator size="large" color="#6200ee" />
+      ) : contributions.length > 0 ? (
         <FlatList
           data={contributions}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item._id}
           renderItem={({ item }) => (
             <View style={styles.contributionItem}>
-              <Text style={styles.contributionDate}>{item.date}</Text>
-              <Text style={styles.contributionAmount}>{item.amount}</Text>
+              <Text style={styles.contributionDate}>
+                {item.contributionDate ? new Date(item.contributionDate).toLocaleDateString() : 'Unknown Date'}
+              </Text>
+              <Text style={styles.contributionAmount}>KES {item.amount}</Text>
+              <Text style={styles.paymentMethod}>Method: {item.paymentMethod || 'Unknown'}</Text>
             </View>
           )}
         />
@@ -63,7 +127,7 @@ const Contribution = () => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Enter Payment Details</Text>
-            
+
             <TextInput
               style={styles.input}
               placeholder="Enter Amount (KES)"
@@ -81,8 +145,12 @@ const Contribution = () => {
               onChangeText={setPaymentMethod}
             />
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleContribution}>
-              <Text style={styles.submitButtonText}>Submit Payment</Text>
+            <TouchableOpacity style={styles.submitButton} onPress={handleContribution} disabled={submitting}>
+              {submitting ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.submitButtonText}>Submit Payment</Text>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
@@ -127,7 +195,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
-    marginLeft: 15
   },
   contributionDate: {
     fontSize: 16,
@@ -137,6 +204,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#6200ee',
+  },
+  paymentMethod: {
+    fontSize: 14,
+    color: '#888',
   },
   noHistory: {
     fontSize: 16,
@@ -155,6 +226,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  totalContributions: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+    color: '#6200ee',
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -164,44 +241,51 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '80%',
     backgroundColor: 'white',
-    padding: 20,
     borderRadius: 10,
-    alignItems: 'center',
+    padding: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 15,
+    textAlign: 'center',
   },
   input: {
     width: '100%',
+    padding: 12,
+    borderColor: '#ddd',
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 8,
-    padding: 10,
     marginBottom: 10,
-    color: '#000',
+    color: '#333',
   },
   submitButton: {
     backgroundColor: '#6200ee',
     paddingVertical: 12,
-    paddingHorizontal: 20,
     borderRadius: 8,
-    width: '100%',
-    alignItems: 'center',
     marginTop: 10,
   },
   submitButtonText: {
     color: 'white',
-    fontSize: 16,
+    textAlign: 'center',
     fontWeight: 'bold',
+    fontSize: 16,
   },
   cancelButton: {
+    backgroundColor: '#ccc',
+    paddingVertical: 12,
+    borderRadius: 8,
     marginTop: 10,
   },
   cancelButtonText: {
+    color: '#333',
+    textAlign: 'center',
+    fontWeight: 'bold',
     fontSize: 16,
-    color: '#6200ee',
   },
 });
 

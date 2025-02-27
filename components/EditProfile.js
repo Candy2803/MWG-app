@@ -5,7 +5,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 
 const EditProfile = ({ navigation }) => {
   const { user, updateUser } = useAuth();
-  const [username, setUsername] = useState(user?.username || '');
+  const [name, setname] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [profileImage, setProfileImage] = useState(user?.profileImage || null);
@@ -23,8 +23,8 @@ const EditProfile = ({ navigation }) => {
   };
 
   const handleSave = () => {
-    if (username && email && phone) {
-      updateUser({ username, email, phone, profileImage }); 
+    if (name && email && phone) {
+      updateUser({ name, email, phone, profileImage }); 
       alert('Profile updated successfully!');
       navigation.goBack(); 
     } else {
@@ -47,8 +47,8 @@ const EditProfile = ({ navigation }) => {
       <TextInput 
         style={styles.input} 
         placeholder="Username" 
-        value={username} 
-        onChangeText={setUsername} 
+        value={name} 
+        onChangeText={setname} 
       />
       
       <TextInput 
