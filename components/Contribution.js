@@ -19,7 +19,7 @@ const Contribution = () => {
 
     if (userId) {
       axios
-        .get(`http://192.168.0.112:5000/api/contributions/${userId}/contributions`)
+        .get(`http://172.20.10.4:5000/api/contributions/${userId}/contributions`)
         .then((response) => {
           setContributions(response.data.contributions);
         })
@@ -53,7 +53,7 @@ const Contribution = () => {
       setSubmitting(true); 
 
       axios
-        .post(`http://192.168.0.112:5000/api/contributions/${userId}/contributions`, {
+        .post(`http://172.20.10.4:5000/api/contributions/${userId}/contributions`, {
           amount,
           paymentMethod,
         })

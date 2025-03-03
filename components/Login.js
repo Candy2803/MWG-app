@@ -13,7 +13,7 @@ const Login = ({ navigation }) => {
   const handleLogin = async () => {
     if (email && password) {
       try {
-        const response = await axios.post('http://192.168.0.112:5000/api/users/login', {
+        const response = await axios.post('http://172.20.10.4:5000/api/users/login', {
           email,
           password,
         });

@@ -20,7 +20,7 @@ function ManageUsers() {
 
   useEffect(() => {
     axios
-      .get("http://192.168.0.112:5000/api/users")
+      .get("http://172.20.10.4:5000/api/users")
       .then((response) => {
         setUsers(response.data);
       })
@@ -33,7 +33,7 @@ function ManageUsers() {
     const updatedUser = users[index];
 
     axios
-      .put(`http://192.168.0.112:5000/api/users/${id}`, updatedUser)
+      .put(`http://172.20.10.4:5000/api/users/${id}`, updatedUser)
       .then((response) => {
         setUsers(users.map((user) => (user._id === id ? response.data : user)));
         Alert.alert(
@@ -57,7 +57,7 @@ function ManageUsers() {
           text: "Delete",
           onPress: () => {
             axios
-              .delete(`http://192.168.0.112:5000/api/users/${id}`)
+              .delete(`http://172.20.10.4:5000/api/users/${id}`)
               .then(() => {
                 setUsers(users.filter((user) => user._id !== id));
               })
@@ -79,7 +79,7 @@ function ManageUsers() {
     }
 
     axios
-      .get(`http://192.168.0.112:5000/api/users/loginadmin/${user._id}`)
+      .get(`http://172.20.10.4:5000/api/users/loginadmin/${user._id}`)
       .then(() => {
         impersonateUser(user);
 
@@ -99,7 +99,7 @@ function ManageUsers() {
 
   const handleApprove = (id) => {
     axios
-      .put(`http://192.168.0.112:5000/api/users/${id}/approve`)
+      .put(`http://172.20.10.4:5000/api/users/${id}/approve`)
       .then((response) => {
         setUsers(
           users.map((user) => (user._id === id ? response.data.user : user))

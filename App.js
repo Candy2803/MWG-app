@@ -18,10 +18,6 @@ import ManageUsers from "./components/ManageUsers";
 import UserHomeScreen from "./components/UserHomeScreen";
 import Settings from "./components/Settings";
 import ManageContributions from "./components/ManageContributions";
-import Reports from "./components/Reports";
-import MoneyMarketStatements from "./components/MoneyMarketStatements";
-import MeetingDocuments from "./components/MeetingDocuments";
-import UpcomingEvents from "./components/UpcomingEvents";
 
 const Stack = createStackNavigator();
 
@@ -55,11 +51,7 @@ function AppNavigator() {
           <Stack.Screen name="Support" component={Support} />
           <Stack.Screen name="Chat" component={ChatPage} />
           <Stack.Screen name="Settings" component={Settings} />
-          <Stack.Screen name="Reports" component={Reports} />
           <Stack.Screen name="ManageContributions" component={ManageContributions} />
-          <Stack.Screen name="MoneyMarketStatements" component={MoneyMarketStatements} />
-          <Stack.Screen name="MeetingDocuments" component={MeetingDocuments} />
-          <Stack.Screen name="UpcomingEvents" component={UpcomingEvents} />
         </>
       ) : user?.role === "user" ? (
         <>
