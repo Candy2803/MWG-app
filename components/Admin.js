@@ -40,7 +40,7 @@ const Admin = () => {
 
           <TouchableOpacity
             style={styles.gridItem}
-            onPress={() => navigation.navigate("ViewReports")}
+            onPress={() => navigation.navigate("Reports")}
           >
             <Text style={styles.gridText}>View Reports</Text>
           </TouchableOpacity>
