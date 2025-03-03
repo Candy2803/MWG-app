@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .reset-container {
+            background-color: #fff;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 300px;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .error-message {
+            color: red;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .success-message {
+            color: green;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="reset-container">
+        <h2>Reset Your Password</h2>
+
+        <!-- Error and success messages -->
+        <div id="message"></div>
+
+        <form id="resetPasswordForm">
+            <label for="newPassword">New Password</label>
+            <input type="password" id="newPassword" name="newPassword" required placeholder="Enter your new password">
+
+            <button type="submit">Reset Password</button>
+        </form>
+    </div>
+
+    <script>
+        // Get the reset token from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token'); // The token is passed as a query parameter in the URL
+
+        // Submit the form data to the backend
+        document.getElementById('resetPasswordForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const newPassword = document.getElementById('newPassword').value;
+
+            if (!newPassword) {
+                displayMessage('Please enter a new password.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/reset-password/${token}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ newPassword }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayMessage(result.message, 'success');
+                } else {
+                    displayMessage(result.message, 'error');
+                }
+            } catch (error) {
+                displayMessage('Error resetting password. Please try again later.', 'error');
+            }
+        });
+
+        // Function to display messages
+        function displayMessage(message, type) {
+            const messageContainer = document.getElementById('message');
+            messageContainer.classList.remove('error-message', 'success-message');
+            messageContainer.classList.add(type === 'error' ? 'error-message' : 'success-message');
+            messageContainer.textContent = message;
+        }
+    </script>
+
+</body>
+</html>

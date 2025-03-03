@@ -19,13 +19,15 @@
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
     "datetimepicker": "^0.1.39",
+    "dotenv": "^16.4.7",
     "expo": "~52.0.36",
     "expo-document-picker": "^13.0.3",
     "expo-status-bar": "~2.0.1",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.10.1",
+    "mongoose": "^8.11.0",
     "nodemailer": "^6.10.0",
     "react": "18.3.1",
     "react-native": "0.76.7",
@@ -35,7 +37,8 @@
     "react-native-reanimated": "^3.16.7",
     "react-native-safe-area-context": "4.12.0",
     "react-native-screens": "~4.4.0",
-    "react-native-vector-icons": "^10.2.0"
+    "react-native-vector-icons": "^10.2.0",
+    "serverless-http": "^3.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

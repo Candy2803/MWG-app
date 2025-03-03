@@ -1,91 +1,97 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const User = require('../models/User');
-const Contribution = require('../models/Contribution'); 
+const Contribution = require('../models/Contribution');
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.status(200).send(users);
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
-router.get('/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).lean();
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' });
-    }
-
-    const contributions = await Contribution.find({ userId: req.params.id });
-
-    res.status(200).send({ user, contributions });
-  } catch (error) {
-    res.status(500).send({ message: 'Error fetching user data', error });
-  }
-});
-
-router.delete('/:id', async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' });
-    }
-
-    await Contribution.deleteMany({ userId: req.params.id });
-
-    // Send email notification about account deletion
-    const mailOptions = {
-      from: 'your-email@gmail.com', // Sender address
-      to: user.email, // User's email address
-      subject: 'ACCOUNT DELETED',
-      text: `Dear ${user.name},\n\nYour account has been deleted by the admin. You will no longer be able to access your account.\n\nBest regards,\nMWG Team`,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
-        return res.status(500).send({ message: 'Account deleted, but email failed to send', error });
-      } else {
-        console.log('Deletion email sent:', info.response);
-      }
-    });
-
-    res.status(200).send({ message: 'User and contributions deleted, email sent', user });
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
-
-router.put('/:id', async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' });
-    }
-
-    const contributions = await Contribution.find({ userId: req.params.id });
-
-    res.status(200).send({ user, contributions });
-  } catch (error) {
-    res.status(500).send(error);
-  }
-});
-
+// Setting up nodemailer transport for email sending
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // or any other email service you want to use
+  service: 'gmail',
   auth: {
     user: 'candyjessie2@gmail.com', // Your email address
     pass: 'ysep jmor nhos fich', // Your email password or app-specific password
   },
 });
 
+// Forgot Password Route
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).send({ message: 'Please provide your email address.' });
+  }
+
+  try {
+    // Find the user with the provided email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).send({ message: 'User with this email does not exist.' });
+    }
+
+    // Generate a password reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiration = Date.now() + 3600000; // Token expires in 1 hour
+
+    // Save the reset token and expiration date in the user's record
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = resetTokenExpiration;
+    await user.save();
+
+    // Send a reset email with the token (included in the link)
+    const resetLink = `http://your-app.com/reset-password/${resetToken}`;
+    const mailOptions = {
+      from: 'candyjessie2@gmail.com',
+      to: email,
+      subject: 'Password Reset Request',
+      text: `To reset your password, please click on the following link:\n\n${resetLink}\n\nIf you did not request this, please ignore this email.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).send({ message: 'Password reset link has been sent to your email address.' });
+  } catch (error) {
+    console.error('Error in forgot-password route:', error);
+    res.status(500).send({ message: 'Error processing the request' });
+  }
+});
+
+// Reset Password Route
+router.post('/reset-password/:token', async (req, res) => {
+  const { token } = req.params;
+  const { newPassword } = req.body;
+
+  if (!newPassword) {
+    return res.status(400).send({ message: 'Please provide a new password.' });
+  }
+
+  try {
+    // Find the user based on the reset token
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }, // Ensure token has not expired
+    });
+
+    if (!user) {
+      return res.status(400).send({ message: 'Invalid or expired password reset token.' });
+    }
+
+    // Hash the new password and save it
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined; // Clear the reset token
+    user.resetPasswordExpires = undefined; // Clear the expiration date
+    await user.save();
+
+    res.status(200).send({ message: 'Password has been reset successfully.' });
+  } catch (error) {
+    console.error('Error in reset-password route:', error);
+    res.status(500).send({ message: 'Error resetting the password.' });
+  }
+});
+
+// Register Route
 router.post('/register', async (req, res) => {
   const { name, email, phone, password } = req.body;
 
@@ -148,10 +154,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-
-
-
-
+// Login Route
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -179,7 +182,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
-
+// Update User Approval Route
 router.put('/:id/approve', async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(req.params.id, { isApproved: true }, { new: true });
@@ -208,53 +211,37 @@ router.put('/:id/approve', async (req, res) => {
   }
 });
 
-router.get('/loginadmin/:id', async (req, res) => {
+// Delete User Route
+router.delete('/:id', async (req, res) => {
   try {
-    const user = await User.findById(req.params.id); 
-
+    const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
 
-    const contributions = await Contribution.find({ userId: req.params.id });
+    await Contribution.deleteMany({ userId: req.params.id });
 
-    res.status(200).send({ message: 'User impersonation data', user, contributions });
-  } catch (error) {
-    res.status(500).send({ message: 'Server error', error });
-  }
-});
+    // Send email notification about account deletion
+    const mailOptions = {
+      from: 'your-email@gmail.com',
+      to: user.email,
+      subject: 'ACCOUNT DELETED',
+      text: `Dear ${user.name},\n\nYour account has been deleted by the admin. You will no longer be able to access your account.\n\nBest regards,\nMWG Team`,
+    };
 
-router.post('/:userId/contributions', async (req, res) => {
-  try {
-    const { userId } = req.params; 
-    const { amount, paymentMethod } = req.body;
-
-    console.log('Received userId:', userId); 
-    console.log('Received request body:', req.body); 
-
-    const user = await User.findById(userId);
-    if (!user) {
-      console.log('User not found'); 
-      return res.status(404).send({ message: 'User not found' });
-    }
-
-    const contribution = new Contribution({
-      userId,
-      amount,
-      paymentMethod,
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).send({ message: 'Account deleted, but email failed to send', error });
+      } else {
+        console.log('Deletion email sent:', info.response);
+      }
     });
 
-    console.log('Contribution object:', contribution); 
-
-    await contribution.save();
-
-    res.status(201).send({ message: 'Contribution added successfully', contribution });
+    res.status(200).send({ message: 'User and contributions deleted, email sent', user });
   } catch (error) {
-    console.error('Error adding contribution:', error); 
-    res.status(500).send({ message: 'Error adding contribution', error: error.message });
+    res.status(500).send(error);
   }
 });
-
-
 
 module.exports = router;

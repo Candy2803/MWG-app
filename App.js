@@ -18,6 +18,8 @@ import ManageUsers from "./components/ManageUsers";
 import UserHomeScreen from "./components/UserHomeScreen";
 import Settings from "./components/Settings";
 import ManageContributions from "./components/ManageContributions";
+import Reports from "./components/Reports";
+import ForgotPassword from "./components/ForgotPassword";
 
 const Stack = createStackNavigator();
 
@@ -52,6 +54,7 @@ function AppNavigator() {
           <Stack.Screen name="Chat" component={ChatPage} />
           <Stack.Screen name="Settings" component={Settings} />
           <Stack.Screen name="ManageContributions" component={ManageContributions} />
+          <Stack.Screen name="Reports" component={Reports} />
         </>
       ) : user?.role === "user" ? (
         <>
@@ -66,6 +69,7 @@ function AppNavigator() {
         <>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Signup" component={Signup} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         </>
       )}
     </Stack.Navigator>

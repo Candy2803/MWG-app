@@ -16,14 +16,14 @@ const Reports = () => {
       <View style={styles.sectionContainer}>
         <TouchableOpacity
           style={styles.itemButton}
-          onPress={() => navigation.navigate("MeetingDocuments")}
+          onPress={() => navigation.navigate("AddMeetingReminder")}
         >
           <Text style={styles.itemText}>Meetings</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.itemButton}
-          onPress={() => navigation.navigate("UpcomingEvents")}
+          onPress={() => navigation.navigate("EventsPage")}
         >
           <Text style={styles.itemText}>Upcoming Events</Text>
         </TouchableOpacity>
