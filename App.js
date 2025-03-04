@@ -19,7 +19,6 @@ import UserHomeScreen from "./components/UserHomeScreen";
 import Settings from "./components/Settings";
 import ManageContributions from "./components/ManageContributions";
 import Reports from "./components/Reports";
-import ForgotPassword from "./components/ForgotPassword";
 
 const Stack = createStackNavigator();
 
@@ -69,7 +68,6 @@ function AppNavigator() {
         <>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Signup" component={Signup} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         </>
       )}
     </Stack.Navigator>

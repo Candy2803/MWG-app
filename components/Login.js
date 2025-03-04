@@ -9,6 +9,8 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useAuth } from "../Auth/AuthContext";
+import { getJWTToken } from "../utils/AuthUtils"; // Import the function
+import { BASE_URL } from "../config";
 
 const Login = ({ navigation }) => {
   const { login } = useAuth();
@@ -20,27 +22,22 @@ const Login = ({ navigation }) => {
     if (email && password) {
       try {
         const response = await axios.post(
-          "http://192.168.1.3:5000/api/users/login",
-          {
-            email,
-            password,
-          }
+          `${BASE_URL}/users/login`, 
+          { email, password }
         );
 
-        const { token, user } = response.data;
+        const { token, user } = response.data; // Assuming token is in response.data.token
 
         if (token) {
-          await AsyncStorage.setItem("accessToken", token);
-          setAccessToken(token);
-          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+          await AsyncStorage.setItem("userToken", token); // Store the token in AsyncStorage
+          setAccessToken(token); // Update local state with the token
+          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Set token globally for future requests
         }
 
         // Check if the user is an admin or already approved
         if (user.role === "admin" || user.isApproved) {
           login(user);
-          if (response.status === 200) {
-            alert("Login successful");
-          }
+          alert("Login successful");
         } else {
           alert("Your account needs approval before you can log in.");
         }
@@ -92,51 +89,3 @@ const Login = ({ navigation }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
-  input: {
-    width: "100%",
-    height: 50,
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-  },
-  button: {
-    backgroundColor: "#6200ee",
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginBottom: 10,
-    width: "100%",
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  linkText: {
-    color: "#6200ee",
-    marginTop: 10,
-  },
-  tokenText: {
-    marginTop: 20,
-    fontSize: 12,
-    color: "gray",
-  },
-});
-
-export default Login;

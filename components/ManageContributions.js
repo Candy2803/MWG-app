@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import axios from "axios";
+import {BASE_URL} from '../config'
 
 const ManageContributions = () => {
   const [users, setUsers] = useState([]); 
@@ -21,7 +22,7 @@ const ManageContributions = () => {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`http://192.168.1.3:5000/api/contributions/users`)
+      .get(`${BASE_URL}/contributions/users`)
       .then((response) => {
         setUsers(response.data.users);
         setLoading(false);
@@ -35,7 +36,7 @@ const ManageContributions = () => {
   const fetchUserContributions = (userId) => {
     setLoadingContributions(true);
     axios
-      .get(`http://192.168.1.3:5000/api/contributions/${userId}/contributions`)
+      .get(`${BASE_URL}/contributions/${userId}/contributions`)
       .then((response) => {
         setUserContributions(response.data.contributions);
         setLoadingContributions(false);

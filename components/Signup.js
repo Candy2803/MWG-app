@@ -8,6 +8,7 @@ import {
   Alert,
 } from "react-native";
 import axios from "axios";
+import { BASE_URL } from "../config";
 
 const Signup = ({ navigation }) => {
   const [username, setUsername] = useState("");
@@ -19,7 +20,7 @@ const Signup = ({ navigation }) => {
     if (username && email && phone && password) {
       try {
         const response = await axios.post(
-          "http://192.168.1.3:5000/api/users/register",
+          `${BASE_URL}/users/register`,
           {
             name: username,
             email: email,

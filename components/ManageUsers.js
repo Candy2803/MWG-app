@@ -12,15 +12,16 @@ import { useAuth } from "../Auth/AuthContext";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
+import {BASE_URL} from '../config'
 
-function ManageUsers() {
+const ManageUsers = () => {
   const [users, setUsers] = useState([]);
   const navigation = useNavigation(); // For navigation
   const [impersonatingUser, setImpersonatingUser] = useState(null);
 
   useEffect(() => {
     axios
-      .get("http://192.168.1.3:5000/api/users")
+      .get(`${BASE_URL}/users`)
       .then((response) => {
         setUsers(response.data);
       })
@@ -33,7 +34,7 @@ function ManageUsers() {
     const updatedUser = users[index];
 
     axios
-      .put(`http://192.168.1.3:5000/api/users/${id}`, updatedUser)
+      .put(`${BASE_URL}/users/${id}`, updatedUser)
       .then((response) => {
         setUsers(users.map((user) => (user._id === id ? response.data : user)));
         Alert.alert(
@@ -57,7 +58,7 @@ function ManageUsers() {
           text: "Delete",
           onPress: () => {
             axios
-              .delete(`http://192.168.1.3:5000/api/users/${id}`)
+              .delete(`${BASE_URL}/users/${id}`)
               .then(() => {
                 setUsers(users.filter((user) => user._id !== id));
               })
@@ -79,7 +80,7 @@ function ManageUsers() {
     }
 
     axios
-      .get(`http://192.168.1.3:5000/api/users/loginadmin/${user._id}`)
+      .get(`${BASE_URL}/users/loginadmin/${user._id}`)
       .then(() => {
         impersonateUser(user);
 
@@ -99,7 +100,7 @@ function ManageUsers() {
 
   const handleApprove = (id) => {
     axios
-      .put(`http://192.168.1.3:5000/api/users/${id}/approve`)
+      .put(`${BASE_URL}/users/${id}/approve`)
       .then((response) => {
         setUsers(
           users.map((user) => (user._id === id ? response.data.user : user))
@@ -111,6 +112,20 @@ function ManageUsers() {
         Alert.alert("Error", "Failed to approve user");
       });
   };
+
+  // Reset password logic
+  const handleResetPassword = (userId) => {
+    axios
+      .post(`${BASE_URL}/reset/reset-password/${userId}`) // Use the correct API endpoint
+      .then(() => {
+        Alert.alert("Success", "Password reset successfully.");
+      })
+      .catch((error) => {
+        console.error("Error resetting password:", error);
+        Alert.alert("Error", "Failed to reset password.");
+      });
+  };
+  
 
   return (
     <View style={styles.container}>
@@ -183,6 +198,11 @@ function ManageUsers() {
                   </TouchableOpacity>
                 )
               )}
+
+              {/* Add the Reset Password button */}
+              <TouchableOpacity onPress={() => handleResetPassword(user._id)}>
+                <Icon name="lock-reset" size={24} color="#FF6347" />
+              </TouchableOpacity>
             </View>
           </View>
         ))}

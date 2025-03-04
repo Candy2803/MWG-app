@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { useAuth } from '../Auth/AuthContext';
 import axios from 'axios';
+import { BASE_URL } from '../config';
 
 const Contribution = () => {
   const { user, isImpersonating, impersonatedUser } = useAuth();
@@ -19,7 +20,7 @@ const Contribution = () => {
 
     if (userId) {
       axios
-        .get(`http://192.168.1.3:5000/api/contributions/${userId}/contributions`)
+        .get(`${BASE_URL}/contributions/${userId}/contributions`)
         .then((response) => {
           setContributions(response.data.contributions);
         })
@@ -53,7 +54,7 @@ const Contribution = () => {
       setSubmitting(true); 
 
       axios
-        .post(`http://192.168.1.3:5000/api/contributions/${userId}/contributions`, {
+        .post(`${BASE_URL}/api/contributions/${userId}/contributions`, {
           amount,
           paymentMethod,
         })
