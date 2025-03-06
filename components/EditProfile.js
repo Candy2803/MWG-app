@@ -71,7 +71,7 @@ const EditProfile = ({ navigation }) => {
       // Prepare the password update request only if new password is provided
       if (newPassword) {
         const passwordUpdateResponse = await axios.put(
-          `http://192.168.1.201:5000/api/reset/update-password`,
+          `https://welfare-api-kappa.vercel.app/api/reset/update-password`,
           {
             email,
             currentPassword,
@@ -95,7 +95,7 @@ const EditProfile = ({ navigation }) => {
   
       // Update user profile information
       const profileUpdateResponse = await axios.put(
-        `http://192.168.1.201:5000/api/users/${user._id}`,
+        `https://welfare-api-kappa.vercel.app/api/users/${user._id}`,
         updatedProfile,
         config
       );

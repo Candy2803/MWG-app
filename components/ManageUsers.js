@@ -20,7 +20,7 @@ const ManageUsers = () => {
 
   useEffect(() => {
     axios
-      .get(`http://192.168.1.201:5000/api/users`)
+      .get(`https://welfare-api-kappa.vercel.app/api/users`)
       .then((response) => {
         setUsers(response.data);
       })
@@ -33,7 +33,7 @@ const ManageUsers = () => {
     const updatedUser = users[index];
 
     axios
-      .put(`http://192.168.1.201:5000/api/users/${id}`, updatedUser)
+      .put(`https://welfare-api-kappa.vercel.app/api/users/${id}`, updatedUser)
       .then((response) => {
         setUsers(users.map((user) => (user._id === id ? response.data : user)));
         Alert.alert(
@@ -57,7 +57,7 @@ const ManageUsers = () => {
           text: "Delete",
           onPress: () => {
             axios
-              .delete(`http://192.168.1.201:5000/api/users/${id}`)
+              .delete(`https://welfare-api-kappa.vercel.app/api/users/${id}`)
               .then(() => {
                 setUsers(users.filter((user) => user._id !== id));
               })
@@ -79,7 +79,7 @@ const ManageUsers = () => {
     }
 
     axios
-      .get(`http://192.168.1.201:5000/api/users/loginadmin/${user._id}`)
+      .get(`https://welfare-api-kappa.vercel.app/api/users/loginadmin/${user._id}`)
       .then(() => {
         impersonateUser(user);
 
@@ -99,7 +99,7 @@ const ManageUsers = () => {
 
   const handleApprove = (id) => {
     axios
-      .put(`http://192.168.1.201:5000/api/users/${id}/approve`)
+      .put(`https://welfare-api-kappa.vercel.app/api/users/${id}/approve`)
       .then((response) => {
         setUsers(
           users.map((user) => (user._id === id ? response.data.user : user))

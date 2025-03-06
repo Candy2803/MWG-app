@@ -22,7 +22,7 @@ const ManageContributions = () => {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`http://192.168.1.201:5000/api/contributions/users`)
+      .get(`https://welfare-api-kappa.vercel.app/api/contributions/users`)
       .then((response) => {
         setUsers(response.data.users);
         setLoading(false);
@@ -36,7 +36,7 @@ const ManageContributions = () => {
   const fetchUserContributions = (userId) => {
     setLoadingContributions(true);
     axios
-      .get(`http://192.168.1.201:5000/api/contributions/${userId}/contributions`)
+      .get(`https://welfare-api-kappa.vercel.app/api/contributions/${userId}/contributions`)
       .then((response) => {
         setUserContributions(response.data.contributions);
         setLoadingContributions(false);
