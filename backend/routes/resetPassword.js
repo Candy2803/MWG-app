@@ -2,6 +2,8 @@
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const User = require('../models/User');
+const nodemailer = require('nodemailer');
+const crypto = require('crypto');
 const authenticateUser = require('../middleware/authenticateUser');
 
 const router = express.Router();
@@ -32,9 +34,12 @@ function sendResetPasswordEmail(userEmail, newPassword) {
 }
 
 // Reset password endpoint
-router.post("/reset-password/:userId", async (req, res) => {
+// Reset password endpoint (using email)
+router.post("/reset-password", async (req, res) => {
+  console.log("Received request to reset password:", req.body);
   try {
-    const user = await User.findById(req.params.userId);
+    const { email } = req.body; // Get email from the request body
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -58,6 +63,7 @@ router.post("/reset-password/:userId", async (req, res) => {
     res.status(500).json({ message: "Error resetting password", error: error.message });
   }
 });
+
 
 // Password update endpoint
 router.put('/update-password', authenticateUser, async (req, res) => {
