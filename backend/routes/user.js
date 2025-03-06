@@ -3,8 +3,7 @@ const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
 const Contribution = require('../models/Contribution');
-
-
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
@@ -161,28 +160,30 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    // Find user by email
     const user = await User.findOne({ email });
+
     if (!user) {
-      return res.status(400).send({ message: 'User not found' });
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    // If the user is an admin or already approved, skip the approval check.
-    if (!user.isApproved && user.role !== 'admin') {
-      return res.status(403).send({ message: 'User not approved by admin' });
+    // Check if the password is correct
+    if (!user.verifyPassword(password)) {
+      return res.status(400).json({ message: 'Invalid email or password' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: 'Invalid username or password' });
-    }
+    // If password is correct, create a JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    const contributions = await Contribution.find({ userId: user._id });
+    // Send the user and token in the response
+    res.json({ user, token });
 
-    res.status(200).send({ message: 'Login successful', user, contributions });
   } catch (error) {
-    res.status(500).send({ message: 'Server error', error });
+    console.error("Login error:", error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 
 
@@ -261,6 +262,7 @@ router.post('/:userId/contributions', async (req, res) => {
     res.status(500).send({ message: 'Error adding contribution', error: error.message });
   }
 });
+
 
 
 

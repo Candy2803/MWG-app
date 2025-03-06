@@ -1,0 +1,8 @@
+{
+  "android": {
+    "package": "com.candyjess.backend"
+  },
+  "ios": {
+    "bundleIdentifier": "com.candyjess.backend"
+  }
+}

@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');  // For password hashing
+
 
 const UserSchema = new mongoose.Schema(
   {
@@ -16,12 +18,8 @@ const UserSchema = new mongoose.Schema(
 );
 
 // Password reset functionality validation
-UserSchema.methods.createPasswordResetToken = function () {
-  // Assuming you would use `crypto` to generate a token in the controller
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  this.passwordResetToken = resetToken;
-  this.passwordResetExpiry = Date.now() + 3600000; // Token expires in 1 hour
-  return resetToken;
+UserSchema.methods.verifyPassword = function(password) {
+  return bcrypt.compareSync(password, this.password);
 };
 
 module.exports = mongoose.model('User', UserSchema);

@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const express = require('express');
 const User = require('../models/User');
@@ -61,6 +61,8 @@ router.post("/reset-password/:userId", async (req, res) => {
 
 // Password update endpoint
 router.put('/update-password', authenticateUser, async (req, res) => {
+  console.log("Received request to update password:", req.body);
+
   try {
     const { currentPassword, newPassword } = req.body;
 
@@ -69,7 +71,18 @@ router.put('/update-password', authenticateUser, async (req, res) => {
       return res.status(400).json({ message: 'Both current and new passwords are required' });
     }
 
-    const user = req.user; // The user should be attached to req by the authenticateUser middleware
+    // Use req.user.email to get the authenticated user
+    const email = req.body.email;  // Get the email from the authenticated user
+    console.log("Authenticated user's email:", email);
+
+    // Find the user by email
+    const user = await User.findOne({ email });
+    console.log("User found:", user);
+
+    // Ensure the user exists
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
 
     // Check if currentPassword matches the user's current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
@@ -86,8 +99,10 @@ router.put('/update-password', authenticateUser, async (req, res) => {
 
     res.status(200).json({ message: 'Password updated successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    console.error("Error updating password:", error); // More detailed error logging
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
 
 module.exports = router;
