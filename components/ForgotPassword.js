@@ -13,14 +13,14 @@ const ForgotPassword = () => {
       setLoading(true); // Set loading to true
 
       try {
-        const response = await axios.post(`https://welfare-api-kappa.vercel.app/api/reset/reset-password`, { email });
+        const response = await axios.post('https://welfare-api-kappa.vercel.app/api/reset/reset-password', { email });
 
         // Assuming the response contains a success message
         if (response.status === 200) {
           Alert.alert('Success', 'A temporary password has been sent to your email.');
         }
       } catch (error) {
-        console.error(error); // For debugging
+        console.error(error.response ? error.response.data : error.message); // Log the error
         Alert.alert('Error', error.response?.data?.message || 'An error occurred');
       } finally {
         setLoading(false); // Set loading to false after request completes

@@ -105,6 +105,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     textAlign: "center",
     marginBottom: 20,
+    fontWeight: "bold",
   },
   input: {
     height: 50,
@@ -112,11 +113,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 20,
     paddingHorizontal: 10,
+    borderRadius: 20,
   },
   button: {
     backgroundColor: "#6200ee",
     padding: 15,
-    borderRadius: 5,
+    borderRadius: 20,
     alignItems: "center",
   },
   buttonText: {

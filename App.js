@@ -3,11 +3,14 @@ import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { StyleSheet, SafeAreaView } from "react-native";
+import { AuthProvider, useAuth } from "./Auth/AuthContext"; // Import useAuth
+import { ChatProvider } from "./Auth/ChatContext"; // Import ChatProvider
+
+// Components
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
 import Contribution from "./components/Contribution";
 import Profile from "./components/Profile";
-import { AuthProvider, useAuth } from "./Auth/AuthContext"; // Import useAuth
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import EditProfile from "./components/EditProfile";
@@ -26,23 +29,26 @@ const Stack = createStackNavigator();
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <SafeAreaView style={styles.container}>
-          <AppNavigator />
-        </SafeAreaView>
-        <UserNavbar />
-        <StatusBar style="auto" />
-      </NavigationContainer>
+      <ChatProvider>
+        <NavigationContainer>
+          <SafeAreaView style={styles.container}>
+            <AppNavigator />
+          </SafeAreaView>
+          <UserNavbar />
+          <StatusBar style="auto" />
+        </NavigationContainer>
+      </ChatProvider>
     </AuthProvider>
   );
 }
 
 function AppNavigator() {
-  const { user } = useAuth(); 
+  const { user } = useAuth(); // Accessing user state from AuthContext
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user?.role === "admin" ? (
+        // Admin Screens
         <>
           <Stack.Screen name="Admin" component={Admin} />
           <Stack.Screen name="ManageUsers" component={ManageUsers} />
@@ -57,6 +63,7 @@ function AppNavigator() {
           <Stack.Screen name="Reports" component={Reports} />
         </>
       ) : user?.role === "user" ? (
+        // User Screens
         <>
           <Stack.Screen name="Home" component={Home} />
           <Stack.Screen name="Contribution" component={Contribution} />
@@ -66,10 +73,11 @@ function AppNavigator() {
           <Stack.Screen name="Chat" component={ChatPage} />
         </>
       ) : (
+        // Auth Screens (Login/Signup/ForgotPassword)
         <>
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Signup" component={Signup} />
-          <Stack.Screen name='ForgotPassword' component={ForgotPassword}/>
+          <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         </>
       )}
     </Stack.Navigator>
@@ -79,7 +87,7 @@ function AppNavigator() {
 function UserNavbar() {
   const { user } = useAuth(); // Access user from AuthContext
 
-  // Conditionally render Navbar for user role only
+  // Conditionally render Navbar only for users (not for admins or unauthenticated users)
   return user?.role === "user" ? <Navbar /> : null;
 }
 

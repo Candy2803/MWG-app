@@ -1,56 +1,98 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, KeyboardAvoidingView, TouchableWithoutFeedback, Keyboard, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useAuth } from '../Auth/AuthContext';
 
 const ChatPage = () => {
-  const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
+  const [userId, setUserId] = useState('user1'); // Example: the local user's ID
 
-  const sendMessage = () => {
+  useEffect(() => {
+    const loadMessages = async () => {
+      try {
+        const storedMessages = await AsyncStorage.getItem('messages');
+        if (storedMessages) {
+          setMessages(JSON.parse(storedMessages));
+        }
+      } catch (error) {
+        console.error('Failed to load messages:', error);
+      }
+    };
+    loadMessages();
+  }, []);
+
+  const sendMessage = async () => {
     if (message.trim() !== '') {
-      setMessages([...messages, { id: Date.now().toString(), text: message }]);
+      const newMessage = {
+        id: Date.now().toString(),
+        text: message,
+        sender: userId, // Store the sender's ID
+      };
+      const updatedMessages = [...messages, newMessage];
+      setMessages(updatedMessages);
+
+      // Store messages in AsyncStorage
+      try {
+        await AsyncStorage.setItem('messages', JSON.stringify(updatedMessages));
+      } catch (error) {
+        console.error('Failed to save messages:', error);
+      }
+
       setMessage('');
     }
   };
 
-  if (!user) {
+  const renderMessage = ({ item }) => {
+    const isSender = item.sender === userId; // Check if the message is from the sender
     return (
-      <View style={styles.container}>
-        <Text style={styles.loginMessage}>
-          You need to log in to view and send messages.
+      <View
+        style={[
+          styles.message,
+          isSender ? styles.senderMessage : styles.receiverMessage,
+        ]}
+      >
+        <Text
+          style={[
+            styles.messageText,
+            isSender ? styles.senderText : styles.receiverText,
+          ]}
+        >
+          {item.text}
         </Text>
       </View>
     );
-  }
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Chat</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <View style={styles.chatContainer}>
+          <Text style={styles.title}>Chat</Text>
 
-      <FlatList
-        data={messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.message}>
-            <Text style={styles.messageText}>{item.text}</Text>
+          <FlatList
+            data={messages}
+            keyExtractor={(item) => item.id}
+            renderItem={renderMessage}
+          />
+
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Type your message..."
+              value={message}
+              onChangeText={setMessage}
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
+              <Icon name="send" size={24} color="white" />
+            </TouchableOpacity>
           </View>
-        )}
-      />
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type your message..."
-          value={message}
-          onChangeText={setMessage}
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Icon name="send" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
-    </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -58,15 +100,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    justifyContent: 'flex-end', // Ensures the input bar stays at the bottom
   },
-  loginMessage: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#d9534f', 
-    textAlign: 'center',
+  chatContainer: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'flex-end', // Keeps messages at the bottom
   },
   title: {
     fontSize: 24,
@@ -75,15 +114,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   message: {
-    backgroundColor: '#6200ee',
     padding: 10,
     borderRadius: 8,
     marginVertical: 5,
-    alignSelf: 'flex-start',
+    maxWidth: '80%',
+  },
+  senderMessage: {
+    backgroundColor: '#6200ee',
+    alignSelf: 'flex-start', // Align the sender's message to the right
+  },
+  receiverMessage: {
+    backgroundColor: 'purple',
+    alignSelf: 'flex-end', // Align the receiver's message to the left
   },
   messageText: {
-    color: 'white',
     fontSize: 16,
+  },
+  senderText: {
+    color: 'black',
+  },
+  receiverText: {
+    color: 'white',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -91,7 +142,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 8,
     padding: 5,
-    marginBottom: 40,
+    marginBottom: 50,
     width: '100%',
   },
   input: {
