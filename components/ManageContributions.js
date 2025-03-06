@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import axios from "axios";
-import {BASE_URL} from '../config'
 
 const ManageContributions = () => {
   const [users, setUsers] = useState([]); 

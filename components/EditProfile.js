@@ -11,7 +11,6 @@ import {
 import { useAuth } from "../Auth/AuthContext";
 import { launchImageLibrary } from "react-native-image-picker";
 import axios from "axios";
-import { BASE_URL } from '../config';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const EditProfile = ({ navigation }) => {

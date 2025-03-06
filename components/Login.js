@@ -10,7 +10,6 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useAuth } from "../Auth/AuthContext";
-import { BASE_URL } from "../config";
 
 const Login = ({ navigation }) => {
   const { login } = useAuth();
