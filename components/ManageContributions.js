@@ -22,7 +22,7 @@ const ManageContributions = () => {
   useEffect(() => {
     setLoading(true);
     axios
-      .get(`${BASE_URL}/contributions/users`)
+      .get(`http://192.168.1.201:5000/api/contributions/users`)
       .then((response) => {
         setUsers(response.data.users);
         setLoading(false);
@@ -36,7 +36,7 @@ const ManageContributions = () => {
   const fetchUserContributions = (userId) => {
     setLoadingContributions(true);
     axios
-      .get(`${BASE_URL}/contributions/${userId}/contributions`)
+      .get(`http://192.168.1.201:5000/api/contributions/${userId}/contributions`)
       .then((response) => {
         setUserContributions(response.data.contributions);
         setLoadingContributions(false);

@@ -5,51 +5,61 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useAuth } from "../Auth/AuthContext";
-import { getJWTToken } from "../utils/AuthUtils"; // Import the function
 import { BASE_URL } from "../config";
 
 const Login = ({ navigation }) => {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [accessToken, setAccessToken] = useState("");
 
   const handleLogin = async () => {
-    if (email && password) {
-      try {
-        const response = await axios.post(
-          `${BASE_URL}/users/login`, 
-          { email, password }
-        );
-
-        const { token, user } = response.data; // Assuming token is in response.data.token
-
-        if (token) {
-          await AsyncStorage.setItem("userToken", token); // Store the token in AsyncStorage
-          setAccessToken(token); // Update local state with the token
-          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; // Set token globally for future requests
-        }
-
-        // Check if the user is an admin or already approved
-        if (user.role === "admin" || user.isApproved) {
-          login(user);
-          alert("Login successful");
-        } else {
-          alert("Your account needs approval before you can log in.");
-        }
-      } catch (error) {
-        alert(
-          "Login failed: " + (error.response?.data?.message || error.message)
-        );
+    if (!email || !password) {
+      Alert.alert("Error", "Please enter email and password");
+      return;
+    }
+  
+    try {
+      const response = await axios.post(
+        `http://192.168.1.201:5000/api/users/login`, 
+        { email, password }
+      );
+  
+      console.log("Login response:", response);  // Log the response
+  
+      const { user, token } = response.data;
+  
+      if (!token) {
+        Alert.alert("Error", "No authentication token received");
+        return;
       }
-    } else {
-      alert("Please enter email and password");
+  
+      // Store the token in AsyncStorage with a consistent key
+      await AsyncStorage.setItem("AUTH_TOKEN", token);
+  
+      // Set the token in axios default headers
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  
+      // Check if the user is an admin or already approved
+      if (user.role === "admin" || user.isApproved) {
+        login(user);
+        Alert.alert("Success", "Login successful");
+      } else {
+        Alert.alert("Error", "Your account needs approval before you can log in.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      Alert.alert(
+        "Login Failed", 
+        error.response?.data?.message || "An error occurred during login"
+      );
     }
   };
+  
 
   return (
     <View style={styles.container}>
@@ -82,10 +92,43 @@ const Login = ({ navigation }) => {
       <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
         <Text style={styles.linkText}>Don't have an account? Sign Up</Text>
       </TouchableOpacity>
-
-      {accessToken ? (
-        <Text style={styles.tokenText}>Access Token: {accessToken}</Text>
-      ) : null}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  input: {
+    height: 50,
+    borderColor: "gray",
+    borderWidth: 1,
+    marginBottom: 20,
+    paddingHorizontal: 10,
+  },
+  button: {
+    backgroundColor: "#6200ee",
+    padding: 15,
+    borderRadius: 5,
+    alignItems: "center",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  linkText: {
+    marginTop: 15,
+    textAlign: "center",
+    color: "#6200ee",
+  },
+});
+
+export default Login;

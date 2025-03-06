@@ -6,16 +6,17 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { useAuth } from "../Auth/AuthContext";
 import { launchImageLibrary } from "react-native-image-picker";
-import axios from "axios"; // Make sure Axios is installed
-import { getJWTToken } from "../utils/AuthUtils"; // Import the function
-import {BASE_URL} from '../config'
+import axios from "axios";
+import { BASE_URL } from '../config';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const EditProfile = ({ navigation }) => {
   const { user, updateUser } = useAuth();
-  const [name, setname] = useState(user?.name || "");
+  const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [profileImage, setProfileImage] = useState(user?.profileImage || null);
@@ -38,59 +39,84 @@ const EditProfile = ({ navigation }) => {
   };
 
   const handleSave = async () => {
-    if (name && email && phone) {
-      // Check if passwords match
-      if (newPassword !== confirmPassword) {
-        alert("Passwords do not match");
+    // Validate input fields
+    if (!name || !email || !phone) {
+      Alert.alert("Error", "Please fill all profile fields");
+      return;
+    }
+  
+    // Password change validation
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Error", "New passwords do not match");
+      return;
+    }
+  
+    try {
+      // Get the authentication token from AsyncStorage
+      const token = await AsyncStorage.getItem("AUTH_TOKEN");
+  
+      if (!token) {
+        Alert.alert("Error", "Authentication token not found. Please login again.");
+        navigation.navigate("Login");
         return;
       }
   
-      // Make sure the user provided the current password when updating the password
-      if (newPassword && currentPassword) {
-        try {
-          // Retrieve the JWT token from AsyncStorage
-          const token = await getJWTToken();
-          
-          if (!token) {
-            alert("Authorization token is missing. Please log in again.");
-            return;
-          }
+      // Prepare the headers with the token
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
   
-          // Send a request to your backend to update the password
-          const response = await axios.put(
-            `${BASE_URL}/reset/update-password`, // Assuming the correct endpoint
-            {
-              currentPassword, // Use the actual current password from the state
-              newPassword,     // Use the new password from the state
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`, // Use the token retrieved from AsyncStorage
-              },
-            }
-          );
-  
-          if (response.status === 200) {
-            alert("Password updated successfully!");
-          } else {
-            alert("Failed to update password.");
-          }
-        } catch (error) {
-          alert(
-            "Error updating password: " +
-              (error.response?.data?.message || error.message)
-          );
+      // Prepare the password update request only if new password is provided
+      if (newPassword) {
+        const passwordUpdateResponse = await axios.put(
+          `http://192.168.1.201:5000/api/reset/update-password`,
+          {
+            email,
+            currentPassword,
+            newPassword,
+          },
+          config
+        );
+        
+        if (passwordUpdateResponse.status !== 200) {
+          throw new Error('Password update failed');
         }
       }
   
-      // Update user profile information (make sure to pass the correct fields here)
-      updateUser({ name, email, phone, profileImage, newPassword });
-      alert("Profile updated successfully!");
-      navigation.goBack();
-    } else {
-      alert("Please fill all fields");
+      // Profile update data (update profile and password together)
+      const updatedProfile = {
+        name,
+        email,
+        phone,
+        profileImage,
+      };
+  
+      // Update user profile information
+      const profileUpdateResponse = await axios.put(
+        `http://192.168.1.201:5000/api/users/${user._id}`,
+        updatedProfile,
+        config
+      );
+  
+      if (profileUpdateResponse.status === 200) {
+        // Update local user state with the new profile data
+        updateUser(profileUpdateResponse.data.user);
+  
+        Alert.alert("Success", "Profile updated successfully!");
+        navigation.goBack();
+      }
+    } catch (error) {
+      console.error("Update error:", error.response?.data || error);
+      Alert.alert(
+        "Error",
+        error.response?.data?.message || "Failed to update profile. Please try again."
+      );
     }
   };
+  
+  
   
   return (
     <View style={styles.container}>
@@ -111,7 +137,7 @@ const EditProfile = ({ navigation }) => {
         style={styles.input}
         placeholder="Username"
         value={name}
-        onChangeText={setname}
+        onChangeText={setName}
       />
 
       <TextInput

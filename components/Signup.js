@@ -20,7 +20,7 @@ const Signup = ({ navigation }) => {
     if (username && email && phone && password) {
       try {
         const response = await axios.post(
-          `${BASE_URL}/users/register`,
+          `http://192.168.1.201:5000/api/users/register`,
           {
             name: username,
             email: email,
