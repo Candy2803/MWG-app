@@ -23,6 +23,7 @@ import Settings from "./components/Settings";
 import ManageContributions from "./components/ManageContributions";
 import Reports from "./components/Reports";
 import ForgotPassword from "./components/ForgotPassword";
+import MoneyMarketPage from "./components/MoneyMarketPage";
 
 const Stack = createStackNavigator();
 
@@ -57,10 +58,11 @@ function AppNavigator() {
           <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen name="EditProfile" component={EditProfile} />
           <Stack.Screen name="Support" component={Support} />
-          <Stack.Screen name="Chat" component={ChatPage} />
+          <Stack.Screen name="ChatPage" component={ChatPage} />
           <Stack.Screen name="Settings" component={Settings} />
           <Stack.Screen name="ManageContributions" component={ManageContributions} />
           <Stack.Screen name="Reports" component={Reports} />
+          <Stack.Screen name="MoneyMarketPage" component={MoneyMarketPage} />
         </>
       ) : user?.role === "user" ? (
         // User Screens

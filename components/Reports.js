@@ -30,7 +30,7 @@ const Reports = () => {
 
         <TouchableOpacity
           style={styles.itemButton}
-          onPress={() => navigation.navigate("MoneyMarketStatements")}
+          onPress={() => navigation.navigate("MoneyMarketPage")}
         >
           <Text style={styles.itemText}>Money Market Account Statements</Text>
         </TouchableOpacity>
