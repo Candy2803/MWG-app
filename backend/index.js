@@ -18,7 +18,7 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: "*",  // Adjust in production for security
+    origin: "*",
     methods: ["GET", "POST"]
   }
 });
@@ -44,29 +44,32 @@ app.use('/api/contributions', contributionRoutes);
 app.use('/api/reset', resetPasswordRoutes);
 
 // File Upload Route
-app.post("/upload", upload.single("file"), (req, res) => {
+app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
     }
 
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { resource_type: "auto" },
-      (error, result) => {
-        if (error) {
-          console.error("Cloudinary upload error:", error);
-          return res.status(500).json({ message: "Cloudinary upload failed", error });
+    const uploadPromise = new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { resource_type: "auto" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
         }
+      );
 
-        console.log("Cloudinary upload result:", result);
-        res.status(200).json({
-          message: "File uploaded successfully",
-          url: result.secure_url,
-        });
-      }
-    );
+      // Create a buffer from the file
+      const buffer = req.file.buffer;
+      uploadStream.end(buffer);
+    });
 
-    req.file.stream.pipe(uploadStream); // Pipe the file directly to Cloudinary
+    const result = await uploadPromise;
+    res.status(200).json({ 
+      message: "File uploaded successfully", 
+      url: result.secure_url 
+    });
+
   } catch (error) {
     console.error("Error in file upload:", error);
     res.status(500).json({ message: "Error uploading file", error: error.message });
@@ -90,9 +93,7 @@ io.on("connection", (socket) => {
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useCreateIndex: true,
-  useFindAndModify: false
+  useUnifiedTopology: true
 })
 .then(() => {
   console.log('Connected to MongoDB');
