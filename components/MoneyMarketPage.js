@@ -1,74 +1,75 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Alert } from "react-native";
 import * as DocumentPicker from "expo-document-picker"; // For Expo
-import AsyncStorage from '@react-native-async-storage/async-storage'; // AsyncStorage
 import { useNavigation } from '@react-navigation/native'; // To navigate to ChatPage
-import io from 'socket.io-client'; // Import socket.io
+import axios from 'axios'; // For HTTP requests
+import io from 'socket.io-client'; // For socket connection
 
 const MoneyMarketPage = () => {
-  const [files, setFiles] = useState([]); // This will store all the uploaded files
-  const socket = io("http://192.168.1.201:4000"); // Socket connection
+  const [files, setFiles] = useState([]); // Store selected files
+  const socket = io("http://192.168.1.201:5000"); // Socket connection
   const navigation = useNavigation(); // To navigate to ChatPage
 
-  useEffect(() => {
-    const loadFiles = async () => {
-      try {
-        const storedFiles = await AsyncStorage.getItem("files");
-        if (storedFiles) {
-          setFiles(JSON.parse(storedFiles)); // Parse the stored files and set them to state
-        }
-      } catch (error) {
-        console.error("Error loading files from AsyncStorage", error);
-      }
-    };
-
-    loadFiles();
-  }, []);
-
-  // Function to pick a document and add it to the list
+  // Function to pick a document
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*", // Allow any file type for testing
+        type: "*/*", // Allow any file type
       });
 
-      if (result && result.assets && result.assets.length > 0) {
-        const file = result.assets[0];
-
-        // Add the picked file to the state without clearing the existing files
-        const updatedFiles = [...files, file];
-        setFiles(updatedFiles);
-
-        // Save the updated files to AsyncStorage
-        await AsyncStorage.setItem("files", JSON.stringify(updatedFiles)); // Persist files
-        console.log("File saved to AsyncStorage:", file.name);
-      } else {
-        console.log("User canceled the document picker");
+      if (result.type === "cancel") {
         Alert.alert("Canceled", "You did not select a document.");
+        return;
       }
+
+      const file = result;
+      const updatedFiles = [...files, file];
+      setFiles(updatedFiles); // Save the file to state
+
     } catch (error) {
       console.error("Error picking document:", error);
       Alert.alert("Error", "An error occurred while picking the document.");
     }
   };
 
-  // Function to share the selected file to chat
-  const shareToChat = (file) => {
-    // Convert local URI to an accessible URL (in this example, just adding https:// for simplicity)
-    const fileUrl = `http://192.168.1.201:4000/uploads/${file.name}`;
-
-    const fileMessage = {
-      type: "file", // File type message
-      fileUri: fileUrl, // Use the file URL to access the file
-      fileName: file.name, // File name
-      userName: "Admin", // Sender's name
-    };
+  const uploadFileToCloudinary = async (file) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: Platform.OS === 'ios' ? file.uri : file.uri.replace("file://", ""), // Adjust for iOS/Android
+      name: file.name,
+      type: file.mimeType || "application/octet-stream", // Ensure correct MIME type
+    });
   
-    // Emit the message with file to the server
-    socket.emit("sendMessage", fileMessage);
+    try {
+      const response = await axios.post("http://192.168.1.201:5000/upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
   
-    // Navigate to ChatPage after sending the file
-    navigation.navigate("ChatPage");
+      const result = response.data;
+      if (result.url) {
+        const fileMessage = {
+          type: "file",
+          fileUri: result.url, // Cloudinary URL
+          fileName: file.name, // File name
+          userName: "Admin", // Sender's name
+        };
+  
+        // Emit the file message to the chat server
+        socket.emit("sendMessage", fileMessage);
+  
+        Alert.alert("Success", "File uploaded and shared in chat.");
+  
+        // Navigate to the ChatPage after sharing the file
+        navigation.navigate("ChatPage");
+      } else {
+        Alert.alert("Error", "File upload failed.");
+      }
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      Alert.alert("Error", "An error occurred while uploading the file.");
+    }
   };
   
 
@@ -89,7 +90,7 @@ const MoneyMarketPage = () => {
               <Text style={styles.fileName}>{item.name}</Text>
               <TouchableOpacity
                 style={styles.shareButton}
-                onPress={() => shareToChat(item)} // Share to the chat
+                onPress={() => uploadFileToCloudinary(item)} // Upload and share the file
               >
                 <Text style={styles.shareButtonText}>Share</Text>
               </TouchableOpacity>
@@ -131,10 +132,6 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fff",
     borderRadius: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
   },
   fileName: {
     fontSize: 16,
