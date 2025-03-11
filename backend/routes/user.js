@@ -42,10 +42,9 @@ router.delete('/:id', async (req, res) => {
 
     await Contribution.deleteMany({ userId: req.params.id });
 
-    // Send email notification about account deletion
     const mailOptions = {
-      from: 'your-email@gmail.com', // Sender address
-      to: user.email, // User's email address
+      from: 'your-email@gmail.com', 
+      to: user.email, 
       subject: 'ACCOUNT DELETED',
       text: `Dear ${user.name},\n\nYour account has been deleted by the admin. You will no longer be able to access your account.\n\nBest regards,\nMWG Team`,
     };

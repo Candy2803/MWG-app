@@ -4,6 +4,7 @@ const cors = require('cors');
 const userRoutes = require('./routes/user');
 const contributionRoutes = require('./routes/contributions');
 const resetPasswordRoutes = require('./routes/resetPassword');
+const ChatRoutes = require("./server")
 const express = require('express');
 const app = express(); 
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/users', userRoutes); 
 app.use('/api/contributions', contributionRoutes); 
 app.use('/api/reset', resetPasswordRoutes)
+app.use("/api", ChatRoutes)
 
 const PORT = process.env.PORT || 5000;
 
