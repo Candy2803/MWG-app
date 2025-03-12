@@ -1,102 +1,141 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Alert } from "react-native";
-import * as DocumentPicker from "expo-document-picker"; // For Expo
-import { useNavigation } from '@react-navigation/native'; // To navigate to ChatPage
-import axios from 'axios'; // For HTTP requests
-import io from 'socket.io-client'; // For socket connection
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
+  Linking,
+} from "react-native";
+import * as DocumentPicker from "expo-document-picker";
+import axios from "axios";
+import { useNavigation } from "@react-navigation/native";
 
 const MoneyMarketPage = () => {
-  const [files, setFiles] = useState([]); // Store selected files
-  const socket = io("http://192.168.1.201:5000"); // Socket connection
-  const navigation = useNavigation(); // To navigate to ChatPage
+  const [isLoading, setIsLoading] = useState(false);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState(null);
+  const navigation = useNavigation();
 
-  // Function to pick a document
   const pickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*", // Allow any file type
+        type: "application/pdf",
+        copyToCacheDirectory: true,
       });
 
-      if (result.type === "cancel") {
-        Alert.alert("Canceled", "You did not select a document.");
+      if (result.canceled) {
+        console.log("User cancelled document picker");
         return;
       }
 
-      const file = result;
-      const updatedFiles = [...files, file];
-      setFiles(updatedFiles); // Save the file to state
-
+      uploadPDF(result.assets[0]);
     } catch (error) {
       console.error("Error picking document:", error);
-      Alert.alert("Error", "An error occurred while picking the document.");
+      Alert.alert("Error", "Failed to pick document");
     }
   };
 
-  const uploadFileToCloudinary = async (file) => {
-    const formData = new FormData();
-    formData.append("file", {
-      uri: Platform.OS === 'ios' ? file.uri : file.uri.replace("file://", ""), // Adjust for iOS/Android
-      name: file.name,
-      type: file.mimeType || "application/octet-stream", // Ensure correct MIME type
-    });
-  
+  const uploadPDF = async (fileAsset) => {
     try {
-      const response = await axios.post("http://192.168.1.201:5000/upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      setIsLoading(true);
+
+      // Create form data
+      const formData = new FormData();
+      formData.append("pdf", {
+        uri: fileAsset.uri,
+        name: fileAsset.name,
+        type: "application/pdf",
       });
-  
-      const result = response.data;
-      if (result.url) {
-        const fileMessage = {
-          type: "file",
-          fileUri: result.url, // Cloudinary URL
-          fileName: file.name, // File name
-          userName: "Admin", // Sender's name
-        };
-  
-        // Emit the file message to the chat server
-        socket.emit("sendMessage", fileMessage);
-  
-        Alert.alert("Success", "File uploaded and shared in chat.");
-  
-        // Navigate to the ChatPage after sharing the file
-        navigation.navigate("ChatPage");
-      } else {
-        Alert.alert("Error", "File upload failed.");
-      }
+
+      // Upload to your server
+      const response = await axios.post(
+        "http://192.168.1.201:4000/upload",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setUploadedFileUrl(response.data.url);
+      Alert.alert("Success", "PDF uploaded successfully!");
     } catch (error) {
-      console.error("Error uploading file:", error);
-      Alert.alert("Error", "An error occurred while uploading the file.");
+      console.error("Error uploading PDF:", error);
+      Alert.alert("Error", "Failed to upload PDF");
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  // Function to open the PDF URL in browser
+  const openPDF = async () => {
+    if (uploadedFileUrl) {
+      try {
+        const supported = await Linking.canOpenURL(uploadedFileUrl);
+
+        if (supported) {
+          await Linking.openURL(uploadedFileUrl);
+        } else {
+          Alert.alert("Error", "Cannot open this URL");
+        }
+      } catch (error) {
+        console.error("Error opening URL:", error);
+        Alert.alert("Error", "Failed to open PDF");
+      }
+    }
+  };
+
+  // Function to share the PDF to chat
+  // Function to share the PDF to chat
+  const shareToChat = () => {
+    if (uploadedFileUrl) {
+      navigation.push("ChatPage", {
+        fileUrl: uploadedFileUrl,
+        fileName: uploadedFileUrl.split("/").pop(), // Extract filename from URL
+      });
+    } else {
+      Alert.alert("Error", "No file uploaded yet");
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Money Market Statements</Text>
+      <Text style={styles.title}>PDF Uploader</Text>
 
-      <TouchableOpacity style={styles.uploadButton} onPress={pickDocument}>
-        <Text style={styles.uploadButtonText}>Upload File</Text>
-      </TouchableOpacity>
+      <Button
+        title="Select PDF Document"
+        onPress={pickDocument}
+        disabled={isLoading}
+      />
 
-      {files.length > 0 && (
-        <FlatList
-          data={files}
-          keyExtractor={(item, index) => index.toString()}
-          renderItem={({ item }) => (
-            <View style={styles.fileContainer}>
-              <Text style={styles.fileName}>{item.name}</Text>
-              <TouchableOpacity
-                style={styles.shareButton}
-                onPress={() => uploadFileToCloudinary(item)} // Upload and share the file
-              >
-                <Text style={styles.shareButtonText}>Share</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
+      {isLoading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+          <Text style={styles.loadingText}>Uploading PDF...</Text>
+        </View>
+      )}
+
+      {uploadedFileUrl && (
+        <View style={styles.resultContainer}>
+          <Text style={styles.successText}>Upload Successful!</Text>
+          <Text style={styles.urlLabel}>PDF URL:</Text>
+          <TouchableOpacity onPress={openPDF}>
+            <Text style={styles.linkText}>{uploadedFileUrl}</Text>
+          </TouchableOpacity>
+
+          <View style={styles.buttonContainer}>
+            <Button title="View PDF" onPress={openPDF} color="#0066cc" />
+
+            <Button
+              title="Share to Chat"
+              onPress={shareToChat}
+              color="#6200ee"
+            />
+          </View>
+        </View>
       )}
     </View>
   );
@@ -106,45 +145,50 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    textAlign: "center",
     marginBottom: 20,
   },
-  uploadButton: {
-    backgroundColor: "#6200ee",
-    padding: 15,
-    borderRadius: 8,
+  loadingContainer: {
+    marginTop: 20,
     alignItems: "center",
-    marginBottom: 20,
   },
-  uploadButtonText: {
-    color: "white",
+  loadingText: {
+    marginTop: 10,
     fontSize: 16,
   },
-  fileContainer: {
+  resultContainer: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: "#e6f7ff",
+    borderRadius: 8,
+    width: "100%",
+  },
+  successText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#0066cc",
+    marginBottom: 10,
+  },
+  urlLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  linkText: {
+    fontSize: 14,
+    color: "#0066cc",
+    textDecorationLine: "underline",
+    marginBottom: 15,
+  },
+  buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#fff",
-    borderRadius: 8,
-  },
-  fileName: {
-    fontSize: 16,
-    color: "#333",
-  },
-  shareButton: {
-    backgroundColor: "#0084FF",
-    padding: 10,
-    borderRadius: 8,
-  },
-  shareButtonText: {
-    color: "white",
-    fontSize: 14,
+    marginTop: 10,
   },
 });
 

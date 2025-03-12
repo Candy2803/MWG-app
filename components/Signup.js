@@ -19,7 +19,7 @@ const Signup = ({ navigation }) => {
     if (username && email && phone && password) {
       try {
         const response = await axios.post(
-          `https://welfare-api-kappa.vercel.app/api/users/register`,
+          `http://192.168.1.201:5000/api/users/register`,
           {
             name: username,
             email: email,

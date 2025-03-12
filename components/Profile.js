@@ -1,14 +1,14 @@
-import React, { useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { useAuth } from '../Auth/AuthContext';
-import Icon from 'react-native-vector-icons/Ionicons';
+import React, { useEffect } from "react";
+import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { useAuth } from "../Auth/AuthContext";
+import Icon from "react-native-vector-icons/Ionicons";
 
 const Profile = ({ navigation }) => {
   const { user, logout } = useAuth();
 
   useEffect(() => {
     if (!user) {
-      navigation.replace('Login'); 
+      navigation.replace("Login"); 
     }
   }, [user, navigation]);
 
@@ -24,15 +24,12 @@ const Profile = ({ navigation }) => {
             <Icon name="person-circle" size={120} color="#6200ee" />
           </View>
         )}
-
-        <Text style={styles.name}>{user?.name || 'No Username'}</Text>
-        <Text style={styles.email}>{user?.email || 'No Email'}</Text>
-        <Text style={styles.email}>{user?.role || 'No Role'}</Text>
-
-        <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
+        <Text style={styles.name}>{user?.name || "No Username"}</Text>
+        <Text style={styles.email}>{user?.email || "No Email"}</Text>
+        <Text style={styles.email}>{user?.role || "No Role"}</Text>
+        <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate("EditProfile")}>
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
-
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
@@ -42,47 +39,38 @@ const Profile = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  profileContainer: { 
-    flex: 1, 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    padding: 20, 
-  },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  profileContainer: { flex: 1, alignItems: "center", justifyContent: "center", padding: 20 },
   profileImage: {
     width: 120,
     height: 120,
     borderRadius: 60,
     borderWidth: 2,
-    borderColor: '#6200ee',
+    borderColor: "#6200ee",
     marginBottom: 15,
   },
-  profileIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 15,
-  },
-  name: { fontSize: 24, fontWeight: 'bold', color: '#333' },
-  email: { fontSize: 16, color: '#666', marginBottom: 20 },
+  profileIconContainer: { alignItems: "center", justifyContent: "center", marginBottom: 15 },
+  name: { fontSize: 24, fontWeight: "bold", color: "#333" },
+  email: { fontSize: 16, color: "#666", marginBottom: 20 },
   editButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: "#6200ee",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
     marginBottom: 10,
   },
-  editButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+  editButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
   logoutButton: {
-    backgroundColor: '#d9534f',
+    backgroundColor: "#d9534f",
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
-  logoutButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
+  logoutButtonText: { color: "white", fontSize: 16, fontWeight: "bold" },
 });
 
 export default Profile;

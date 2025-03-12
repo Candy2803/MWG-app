@@ -13,7 +13,7 @@ const ForgotPassword = () => {
       setLoading(true); // Set loading to true
 
       try {
-        const response = await axios.post('https://welfare-api-kappa.vercel.app/api/reset/reset-password', { email });
+        const response = await axios.post('http://192.168.1.201:5000/api/reset/reset-password', { email });
 
         // Assuming the response contains a success message
         if (response.status === 200) {

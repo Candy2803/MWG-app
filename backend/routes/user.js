@@ -18,6 +18,27 @@ router.get('/', async (req, res) => {
   }
 });
 
+// In your routes file (for example, userRoutes.js)
+router.put('/:id', async (req, res) => {
+  try {
+    // Extract profileImage (and any other fields) from the request body
+    const { profileImage, ...otherFields } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { ...otherFields, profileImage },
+      { new: true }
+    );
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+    res.status(200).send({ user });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).send({ message: "Error updating user", error: error.message });
+  }
+});
+
+
 router.get('/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).lean();

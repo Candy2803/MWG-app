@@ -1,19 +1,20 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const http = require('http');
-const socketIo = require('socket.io');
-const cloudinary = require('cloudinary').v2;
-const multer = require('multer');
+const express = require("express");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+const dotenv = require("dotenv");
+const cors = require("cors");
+const mongoose = require("mongoose");
+const http = require("http");
+const socketIo = require("socket.io");
 
 // Route imports
-const userRoutes = require('./routes/user');
-const contributionRoutes = require('./routes/contributions');
-const resetPasswordRoutes = require('./routes/resetPassword');
+const userRoutes = require("./routes/user");
+const contributionRoutes = require("./routes/contributions");
+const resetPasswordRoutes = require("./routes/resetPassword");
 
 dotenv.config();
 
+// Initialize Express app
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -34,14 +35,14 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Multer Setup
+// Multer Setup (In-memory storage)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Routes
-app.use('/api/users', userRoutes);
-app.use('/api/contributions', contributionRoutes);
-app.use('/api/reset', resetPasswordRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/contributions", contributionRoutes);
+app.use("/api/reset", resetPasswordRoutes);
 
 // File Upload Route
 app.post("/upload", upload.single("file"), async (req, res) => {
@@ -65,9 +66,9 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     });
 
     const result = await uploadPromise;
-    res.status(200).json({ 
-      message: "File uploaded successfully", 
-      url: result.secure_url 
+    res.status(200).json({
+      message: "File uploaded successfully",
+      url: result.secure_url
     });
 
   } catch (error) {
@@ -96,19 +97,19 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true
 })
 .then(() => {
-  console.log('Connected to MongoDB');
+  console.log("Connected to MongoDB");
   const PORT = process.env.PORT || 5000;
   server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 })
 .catch((error) => {
-  console.error('Error connecting to MongoDB:', error);
+  console.error("Error connecting to MongoDB:", error);
   process.exit(1);
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!', error: err.message });
+  res.status(500).json({ message: "Something went wrong!", error: err.message });
 });
