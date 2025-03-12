@@ -1,32 +1,32 @@
-const express = require("express");
-const http = require("http");
+// socket.js
 const socketIo = require("socket.io");
-const cors = require("cors");
 
-const app = express();
-app.use(cors());
+module.exports = (server) => {
+  // Initialize Socket.io with your server instance
+  const io = socketIo(server, {
+    cors: { origin: "*", methods: ["GET", "POST"] }
+  });
 
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: { origin: "*" }
-});
+  // In-memory storage for messages (consider a persistent store for production)
+  let messages = [];
 
-io.on("connection", (socket) => {
+  io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
-    // Send existing messages to the newly connected client
+
+    // Send existing messages to the connected client
     socket.emit("existingMessages", messages);
-  
+
     // Listen for incoming messages
     socket.on("sendMessage", (message) => {
       console.log("Received message:", message);
       messages.push(message);
       io.emit("message", message);
     });
-  
+
     socket.on("disconnect", () => {
       console.log("A user disconnected:", socket.id);
     });
   });
 
-const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Socket server running on port ${PORT}`));
+  return io;
+};
