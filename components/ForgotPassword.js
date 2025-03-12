@@ -31,7 +31,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://192.168.1.201:5000/api/reset/reset-password', { email });
+      const response = await axios.post('https://mwg-app-api.vercel.app/api/reset/reset-password', { email });
 
       if (response.status === 200) {
         Alert.alert('Success', 'A temporary password has been sent to your email.');

@@ -1,6 +1,6 @@
 // socket.js
 import io from 'socket.io-client';
 
-const socket = io("http://192.168.1.201:5000");
+const socket = io("https://mwg-app-api.vercel.app/");
 
 export default socket;

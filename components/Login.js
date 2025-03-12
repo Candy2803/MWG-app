@@ -36,7 +36,7 @@ const Login = ({ navigation }) => {
 
     try {
       const response = await axios.post(
-        `http://192.168.1.201:5000/api/users/login`,
+        `https://mwg-app-api.vercel.app/api/users/login`,
         { email, password }
       );
 

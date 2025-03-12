@@ -20,7 +20,7 @@ import io from "socket.io-client";
 import axios from "axios";
 
 // Use the same socket connection as ChatPage
-const socket = io("http://192.168.1.201:5000");
+const socket = io("https://mwg-app-api.vercel.app/");
 
 const Events = () => {
   const navigation = useNavigation();
@@ -179,8 +179,8 @@ const Events = () => {
       // Use a different endpoint for videos if type is "video"
       const uploadEndpoint =
         type === "video"
-          ? "http://192.168.1.201:5000/uploadVideo"
-          : "http://192.168.1.201:5000/uploadImage";
+          ? "https://mwg-app-api.vercel.app/uploadVideo"
+          : "https://mwg-app-api.vercel.app/uploadImage";
   
       const response = await axios.post(uploadEndpoint, formData, {
         headers: {
