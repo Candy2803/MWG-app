@@ -20,7 +20,7 @@ import io from "socket.io-client";
 import axios from "axios";
 
 // Use the same socket connection as ChatPage
-const socket = io("http://192.168.1.201:4000");
+const socket = io("http://192.168.1.201:5000");
 
 const Events = () => {
   const navigation = useNavigation();
@@ -162,35 +162,37 @@ const Events = () => {
 
   const uploadMedia = async (uri, type) => {
     if (!uri) return;
-
+  
     try {
       setUploading(true);
-      // Instead of simulating a delay, we'll upload to our server
-      // Create form data
       const formData = new FormData();
-      formData.append(type, {
+  
+      // Determine field name based on type
+      const fieldName = type === "image" ? "image" : "video";
+  
+      formData.append(fieldName, {
         uri,
         name: `event_${Date.now()}.${type === "image" ? "jpg" : "mp4"}`,
         type: type === "image" ? "image/jpeg" : "video/mp4",
       });
-
+  
       // Use a different endpoint for videos if type is "video"
       const uploadEndpoint =
         type === "video"
-          ? "http://192.168.1.201:4000/uploadVideo"
-          : "http://192.168.1.201:4000/upload";
-
+          ? "http://192.168.1.201:5000/uploadVideo"
+          : "http://192.168.1.201:5000/uploadImage";
+  
       const response = await axios.post(uploadEndpoint, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-
+  
       // Assume response.data.url contains the Cloudinary URL
       const serverUrl = response.data.url;
       console.log("Upload response:", response.data);
-
-      // Create a new event with either imageUri or videoUri
+  
+      // Create a new event object
       const newEvent = {
         id: Date.now().toString(),
         title: eventTitle,
@@ -200,23 +202,23 @@ const Events = () => {
         timestamp: new Date().toISOString(),
         createdBy: user.name,
       };
-
+  
       const updatedEvents = [...events, newEvent];
       setEvents(updatedEvents);
       saveEvents(updatedEvents);
-
+  
       setEventTitle("");
       setEventDescription("");
       setUploading(false);
-
+  
       Alert.alert("Success", `${type === "image" ? "Image" : "Video"} uploaded successfully.`);
     } catch (error) {
-      console.error("Error uploading media:", error);
+      console.error("Error uploading media:", error.response || error);
       setUploading(false);
       Alert.alert("Error", "Failed to upload media: " + error.message);
     }
   };
-
+  
   const shareEventToChat = (event) => {
     if (!isConnected) {
       Alert.alert("Error", "Not connected to chat server.");

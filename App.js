@@ -2,10 +2,9 @@ import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer, useNavigation } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
-import { StyleSheet, SafeAreaView, TouchableOpacity } from "react-native";
+import { StyleSheet, SafeAreaView } from "react-native";
 import { AuthProvider, useAuth } from "./Auth/AuthContext";
 import { ChatProvider } from "./Auth/ChatContext";
-import Icon from 'react-native-vector-icons/Ionicons'; 
 
 // Components
 import Navbar from "./components/Navbar";
@@ -73,11 +72,6 @@ function AppNavigator() {
             options={({ navigation }) => CustomHeader({ title: "Edit Profile", navigation })}
           />
           <Stack.Screen
-            name="Support"
-            component={Support}
-            options={({ navigation }) => CustomHeader({ title: "Support", navigation })}
-          />
-          <Stack.Screen
             name="ChatPage"
             component={ChatPage}
             options={({ navigation }) => CustomHeader({ title: "Chat", navigation })}
@@ -136,6 +130,11 @@ function AppNavigator() {
             name="Chat"
             component={ChatPage}
             options={({ navigation }) => CustomHeader({ title: "Chat", navigation })}
+          />
+          <Stack.Screen
+            name="Settings"
+            component={Settings}
+            options={({ navigation }) => CustomHeader({ title: "Settings", navigation })}
           />
         </>
       ) : (

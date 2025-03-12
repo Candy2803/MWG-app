@@ -1,7 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, TextInput, ActivityIndicator } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  FlatList, 
+  Modal, 
+  TextInput, 
+  ActivityIndicator,
+  SafeAreaView,
+  StatusBar,
+  Image,
+  Dimensions
+} from 'react-native';
 import { useAuth } from '../Auth/AuthContext';
 import axios from 'axios';
+import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 
 const Contribution = () => {
   const { user, isImpersonating, impersonatedUser } = useAuth();
@@ -10,8 +24,8 @@ const Contribution = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [contributions, setContributions] = useState([]);
   const [loading, setLoading] = useState(false); 
-  const [submitting, setSubmitting] = useState(false); 
-
+  const [submitting, setSubmitting] = useState(false);
+  
   const fetchContributions = () => {
     setLoading(true); 
     const userId = isImpersonating ? impersonatedUser?._id : user?._id;
@@ -78,214 +92,388 @@ const Contribution = () => {
 
   if (!user && !isImpersonating) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>You must be logged in to view this page.</Text>
-      </View>
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#f8f9fa" />
+        <View style={styles.emptyStateContainer}>
+          <FontAwesome5 name="user-lock" size={60} color="#d1d9e6" />
+          <Text style={styles.emptyStateTitle}>Authentication Required</Text>
+          <Text style={styles.emptyStateText}>You must be logged in to view your contributions.</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   const displayName = isImpersonating ? impersonatedUser?.name : user?.name;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>
-        {isImpersonating
-          ? `Welcome, ${displayName} (impersonated)`
-          : `Welcome, ${displayName || 'User'}!`}
-      </Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#4527a0" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Contributions</Text>
+        <Text style={styles.headerSubtitle}>
+          {isImpersonating
+            ? `${displayName} (impersonated)`
+            : `${displayName || 'User'}`}
+        </Text>
+      </View>
+      
+      {/* Summary Card */}
+      <View style={styles.summaryCard}>
+        <View style={styles.totalContainer}>
+          <Text style={styles.totalLabel}>Total Contributions</Text>
+          <Text style={styles.totalAmount}>KES {calculateTotalContributions().toFixed(2)}</Text>
+        </View>
+        <TouchableOpacity style={styles.contributeButton} onPress={() => setModalVisible(true)}>
+          <Text style={styles.contributeButtonText}>Contribute</Text>
+          <MaterialIcons name="arrow-forward" size={18} color="#FFF" />
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
-        <Text style={styles.buttonText}>Contribute Now</Text>
-      </TouchableOpacity>
+      {/* History Section */}
+      <View style={styles.historyContainer}>
+        <View style={styles.historyHeader}>
+          <Text style={styles.historyTitle}>Contribution History</Text>
+          <TouchableOpacity onPress={fetchContributions}>
+            <MaterialIcons name="refresh" size={22} color="#5e35b1" />
+          </TouchableOpacity>
+        </View>
+        
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#5e35b1" />
+            <Text style={styles.loadingText}>Loading your contributions...</Text>
+          </View>
+        ) : contributions.length > 0 ? (
+          <FlatList
+            data={contributions}
+            keyExtractor={(item) => item._id}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => (
+              <View style={styles.contributionItem}>
+                <View style={styles.contributionLeft}>
+                  <View style={styles.iconContainer}>
+                    <FontAwesome5 
+                      name={item.paymentMethod?.toLowerCase().includes('pesa') ? 'mobile-alt' : 'credit-card'} 
+                      size={18} 
+                      color="#5e35b1" 
+                    />
+                  </View>
+                  <View style={styles.contributionDetails}>
+                    <Text style={styles.paymentMethod}>{item.paymentMethod || 'Unknown'}</Text>
+                    <Text style={styles.contributionDate}>
+                      {item.contributionDate ? new Date(item.contributionDate).toLocaleDateString('en-GB', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      }) : 'Unknown Date'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.contributionAmount}>KES {item.amount.toFixed(2)}</Text>
+              </View>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyStateContainer}>
+                <FontAwesome5 name="hands-helping" size={50} color="#d1d9e6" />
+                <Text style={styles.emptyStateTitle}>No contributions yet</Text>
+                <Text style={styles.emptyStateText}>Make your first contribution today!</Text>
+              </View>
+            }
+          />
+        ) : (
+          <View style={styles.emptyStateContainer}>
+            <FontAwesome5 name="hands-helping" size={50} color="#d1d9e6" />
+            <Text style={styles.emptyStateTitle}>No contributions yet</Text>
+            <Text style={styles.emptyStateText}>Make your first contribution today!</Text>
+          </View>
+        )}
+      </View>
 
-      <Text style={styles.totalContributions}>
-        Total Contributions: KES {calculateTotalContributions().toFixed(2)}
-      </Text>
-
-      <Text style={styles.sectionTitle}>Your Contribution History</Text>
-      {loading ? (
-        <ActivityIndicator size="large" color="#6200ee" />
-      ) : contributions.length > 0 ? (
-        <FlatList
-          data={contributions}
-          keyExtractor={(item) => item._id}
-          renderItem={({ item }) => (
-            <View style={styles.contributionItem}>
-              <Text style={styles.contributionDate}>
-                {item.contributionDate ? new Date(item.contributionDate).toLocaleDateString() : 'Unknown Date'}
-              </Text>
-              <Text style={styles.contributionAmount}>KES {item.amount}</Text>
-              <Text style={styles.paymentMethod}>Method: {item.paymentMethod || 'Unknown'}</Text>
-            </View>
-          )}
-        />
-      ) : (
-        <Text style={styles.noHistory}>No contributions yet.</Text>
-      )}
-
+      {/* Contribution Modal */}
       <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Enter Payment Details</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>New Contribution</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <MaterialIcons name="close" size={24} color="#555" />
+              </TouchableOpacity>
+            </View>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Enter Amount (KES)"
-              placeholderTextColor="#ccc"
-              keyboardType="numeric"
-              value={amount}
-              onChangeText={setAmount}
-            />
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Amount (KES)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter amount"
+                placeholderTextColor="#aaa"
+                keyboardType="numeric"
+                value={amount}
+                onChangeText={setAmount}
+              />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Payment Method (e.g., M-Pesa)"
-              placeholderTextColor="#ccc"
-              value={paymentMethod}
-              onChangeText={setPaymentMethod}
-            />
+              <Text style={styles.inputLabel}>Payment method</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="e.g., M-Pesa, Bank Transfer"
+                placeholderTextColor="#aaa"
+                value={paymentMethod}
+                onChangeText={setPaymentMethod}
+              />
 
-            <TouchableOpacity style={styles.submitButton} onPress={handleContribution} disabled={submitting}>
-              {submitting ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.submitButtonText}>Submit Payment</Text>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.submitButton, (!amount || !paymentMethod) && styles.submitButtonDisabled]} 
+                onPress={handleContribution} 
+                disabled={submitting || !amount || !paymentMethod}
+              >
+                {submitting ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.submitButtonText}>Submit Contribution</Text>
+                    <MaterialIcons name="send" size={18} color="#FFF" />
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
+
+const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    backgroundColor: '#f8f9fa',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  contributionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '90%',
-    padding: 12,
-    backgroundColor: 'white',
-    borderRadius: 8,
-    marginVertical: 5,
+  header: {
+    backgroundColor: '#5e35b1',
+    paddingTop: 20,
+    paddingBottom: 25,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  contributionDate: {
-    fontSize: 16,
-    color: '#555',
-  },
-  contributionAmount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#6200ee',
-  },
-  paymentMethod: {
-    fontSize: 14,
-    color: '#888',
-  },
-  noHistory: {
-    fontSize: 16,
-    color: '#888',
-    marginTop: 10,
-  },
-  button: {
-    backgroundColor: '#6200ee',
-    paddingVertical: 14,
-    paddingHorizontal: 30,
-    borderRadius: 8,
-    marginTop: 20,
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  totalContributions: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-    color: '#6200ee',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 5,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 4,
   },
-  input: {
-    width: '100%',
-    padding: 12,
-    borderColor: '#ddd',
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 10,
+  headerSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontWeight: '500',
+  },
+  summaryCard: {
+    backgroundColor: 'white',
+    margin: 16,
+    marginTop: -20,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  totalContainer: {
+    marginBottom: 16,
+  },
+  totalLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  totalAmount: {
+    fontSize: 28,
+    fontWeight: 'bold',
     color: '#333',
   },
-  submitButton: {
-    backgroundColor: '#6200ee',
+  contributeButton: {
+    backgroundColor: '#5e35b1',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: 12,
     borderRadius: 8,
+  },
+  contributeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 6,
+  },
+  historyContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  historyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  listContent: {
+    paddingBottom: 20,
+  },
+  contributionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    marginBottom: 10,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  contributionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: 'rgba(94, 53, 177, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  contributionDetails: {
+    flex: 1,
+  },
+  paymentMethod: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 2,
+  },
+  contributionDate: {
+    fontSize: 14,
+    color: '#888',
+  },
+  contributionAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#5e35b1',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
     marginTop: 10,
+    color: '#666',
+    fontSize: 14,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#555',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 30,
+    paddingTop: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalBody: {
+    padding: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  input: {
+    backgroundColor: '#f5f5f5',
+    padding: 14,
+    borderRadius: 8,
+    marginBottom: 18,
+    color: '#333',
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  submitButton: {
+    backgroundColor: '#5e35b1',
+    paddingVertical: 14,
+    borderRadius: 8,
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#b39ddb',
   },
   submitButtonText: {
     color: 'white',
     textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 16,
-  },
-  cancelButton: {
-    backgroundColor: '#ccc',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  cancelButtonText: {
-    color: '#333',
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 16,
+    marginRight: 8,
   },
 });
 

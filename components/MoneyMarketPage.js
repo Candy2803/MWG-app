@@ -2,16 +2,18 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  Button,
   StyleSheet,
   Alert,
   ActivityIndicator,
   TouchableOpacity,
   Linking,
+  SafeAreaView,
+  Image,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const MoneyMarketPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +53,7 @@ const MoneyMarketPage = () => {
 
       // Upload to your server
       const response = await axios.post(
-        "http://192.168.1.201:4000/upload",
+        "http://192.168.1.201:5000/upload",
         formData,
         {
           headers: {
@@ -89,7 +91,6 @@ const MoneyMarketPage = () => {
   };
 
   // Function to share the PDF to chat
-  // Function to share the PDF to chat
   const shareToChat = () => {
     if (uploadedFileUrl) {
       navigation.push("ChatPage", {
@@ -102,93 +103,186 @@ const MoneyMarketPage = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>PDF Uploader</Text>
-
-      <Button
-        title="Select PDF Document"
-        onPress={pickDocument}
-        disabled={isLoading}
-      />
-
-      {isLoading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text style={styles.loadingText}>Uploading PDF...</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient
+        colors={['#f0f8ff', '#e6f7ff']}
+        style={styles.container}
+      >
+        <View style={styles.headerContainer}>
+          <Image 
+            source={{ uri: "https://via.placeholder.com/50" }} 
+            style={styles.logo} 
+          />
+          <Text style={styles.title}>Money Market Statements</Text>
         </View>
-      )}
 
-      {uploadedFileUrl && (
-        <View style={styles.resultContainer}>
-          <Text style={styles.successText}>Upload Successful!</Text>
-          <Text style={styles.urlLabel}>PDF URL:</Text>
-          <TouchableOpacity onPress={openPDF}>
-            <Text style={styles.linkText}>{uploadedFileUrl}</Text>
+        <View style={styles.uploadCard}>
+          <TouchableOpacity 
+            style={styles.selectButton} 
+            onPress={pickDocument}
+            disabled={isLoading}
+          >
+            <Text style={styles.selectButtonText}>
+              {isLoading ? "Processing..." : "Select PDF Document"}
+            </Text>
           </TouchableOpacity>
 
-          <View style={styles.buttonContainer}>
-            <Button title="View PDF" onPress={openPDF} color="#0066cc" />
-
-            <Button
-              title="Share to Chat"
-              onPress={shareToChat}
-              color="#6200ee"
-            />
-          </View>
+          {isLoading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4a80f5" />
+              <Text style={styles.loadingText}>Uploading PDF...</Text>
+            </View>
+          )}
         </View>
-      )}
-    </View>
+
+        {uploadedFileUrl && (
+          <View style={styles.resultContainer}>
+            <View style={styles.successBadge}>
+              <Text style={styles.successText}>Upload Complete</Text>
+            </View>
+            
+            <Text style={styles.urlLabel}>PDF Location:</Text>
+            <TouchableOpacity onPress={openPDF} style={styles.linkContainer}>
+              <Text numberOfLines={1} ellipsizeMode="middle" style={styles.linkText}>
+                {uploadedFileUrl}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.actionButton} onPress={openPDF}>
+                <Text style={styles.actionButtonText}>View PDF</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={[styles.actionButton, styles.shareButton]} onPress={shareToChat}>
+                <Text style={styles.actionButtonText}>Share to Chat</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </LinearGradient>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: "center",
-    alignItems: "center",
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingVertical: 10,
+  },
+  logo: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 15,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#333",
+  },
+  uploadCard: {
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 25,
     marginBottom: 20,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    alignItems: "center",
+  },
+  selectButton: {
+    backgroundColor: "#4a80f5",
+    paddingVertical: 15,
+    paddingHorizontal: 25,
+    borderRadius: 30,
+    width: "100%",
+    alignItems: "center",
+  },
+  selectButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "600",
   },
   loadingContainer: {
-    marginTop: 20,
+    marginTop: 25,
     alignItems: "center",
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 15,
     fontSize: 16,
+    color: "#666",
   },
   resultContainer: {
-    marginTop: 20,
-    padding: 15,
+    backgroundColor: "white",
+    borderRadius: 12,
+    padding: 25,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  successBadge: {
     backgroundColor: "#e6f7ff",
-    borderRadius: 8,
-    width: "100%",
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+    marginBottom: 15,
   },
   successText: {
-    fontSize: 18,
-    fontWeight: "bold",
+    fontSize: 14,
+    fontWeight: "600",
     color: "#0066cc",
-    marginBottom: 10,
   },
   urlLabel: {
     fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
+    fontWeight: "600",
+    marginBottom: 8,
+    color: "#555",
+  },
+  linkContainer: {
+    backgroundColor: "#f5f5f5",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 20,
   },
   linkText: {
     fontSize: 14,
     color: "#0066cc",
-    textDecorationLine: "underline",
-    marginBottom: 15,
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: "#4a80f5",
+    padding: 15,
+    borderRadius: 30,
+    alignItems: "center",
+    marginRight: 10,
+  },
+  shareButton: {
+    backgroundColor: "#6200ee",
+    marginRight: 0,
+    marginLeft: 10,
+  },
+  actionButtonText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 15,
   },
 });
 

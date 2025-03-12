@@ -27,7 +27,7 @@ const Navbar = () => {
 const styles = StyleSheet.create({
   navbar: {
     width: '100%',
-    height: 90,
+    height: 70,
     backgroundColor: '#6200ee',
     position: 'absolute',
     bottom: 0,

@@ -1,4 +1,3 @@
-// Meeting.js
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -10,7 +9,8 @@ import {
   Platform,
   Alert,
   KeyboardAvoidingView,
-  Switch
+  Switch,
+  Image
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
@@ -222,9 +222,7 @@ Please add this event to your calendar.`;
       // After emitting, open the mail composer to send invites (with Google Calendar link)
       sendEmailInvites(meetingInfo);
 
-      Alert.alert('Success', 'Meeting created, shared to chat, and email invites sent!', [
-        { text: 'OK', onPress: () => navigation.goBack() }
-      ]);
+      
     } catch (error) {
       console.error('Error creating meeting:', error);
       Alert.alert('Error', 'Failed to create meeting: ' + error.message);
@@ -240,156 +238,402 @@ Please add this event to your calendar.`;
     return defaultCalendars.length > 0 ? defaultCalendars[0].id : calendars.length > 0 ? calendars[0].id : null;
   };
 
-  return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+  const renderRecurringButton = (type, label, icon) => (
+    <TouchableOpacity 
+      style={[
+        styles.recurringButton, 
+        recurringType === type && styles.recurringButtonActive
+      ]} 
+      onPress={() => setRecurringType(type)}
     >
-      <ScrollView>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color="#6200ee" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Create Meeting</Text>
-          <TouchableOpacity onPress={createMeeting} style={styles.createButton}>
-            <Text style={styles.createButtonText}>Create</Text>
-          </TouchableOpacity>
-        </View>
+      <Icon 
+        name={icon} 
+        size={16} 
+        color={recurringType === type ? "#ffffff" : "#555555"} 
+        style={styles.recurringIcon} 
+      />
+      <Text style={recurringType === type ? styles.recurringTextActive : styles.recurringText}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
 
-        <View style={styles.formContainer}>
-          <Text style={styles.label}>Meeting Title*</Text>
-          <TextInput
-            style={styles.input}
-            value={title}
-            onChangeText={setTitle}
-            placeholder="Enter meeting title"
-          />
-
-          <Text style={styles.label}>Description</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Enter meeting description"
-            multiline
-            numberOfLines={4}
-          />
-
-          <View style={styles.dateTimeSection}>
-            <Text style={styles.sectionTitle}>Date & Time</Text>
-            <View style={styles.dateTimePicker}>
-              <Text style={styles.dateTimeLabel}>Start:</Text>
-              <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowStartPicker(true)}>
-                <Text>{formatDate(startDate)} {formatTime(startDate)}</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.dateTimePicker}>
-              <Text style={styles.dateTimeLabel}>End:</Text>
-              <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowEndPicker(true)}>
-                <Text>{formatDate(endDate)} {formatTime(endDate)}</Text>
-              </TouchableOpacity>
-            </View>
-            {showStartPicker && (
-              <DateTimePicker value={startDate} mode="datetime" display="default" onChange={handleStartDateChange} />
-            )}
-            {showEndPicker && (
-              <DateTimePicker value={endDate} mode="datetime" display="default" onChange={handleEndDateChange} minimumDate={startDate} />
-            )}
-          </View>
-
-          <View style={styles.switchRow}>
-            <Text style={styles.label}>Recurring Meeting</Text>
-            <Switch
-              value={isRecurring}
-              onValueChange={setIsRecurring}
-              trackColor={{ false: "#767577", true: "#b39ddb" }}
-              thumbColor={isRecurring ? "#6200ee" : "#f4f3f4"}
-            />
-          </View>
-
-          {isRecurring && (
-            <View style={styles.recurringOptions}>
-              <TouchableOpacity style={[styles.recurringButton, recurringType === 'daily' && styles.recurringButtonActive]} onPress={() => setRecurringType('daily')}>
-                <Text style={recurringType === 'daily' ? styles.recurringTextActive : styles.recurringText}>Daily</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.recurringButton, recurringType === 'weekly' && styles.recurringButtonActive]} onPress={() => setRecurringType('weekly')}>
-                <Text style={recurringType === 'weekly' ? styles.recurringTextActive : styles.recurringText}>Weekly</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.recurringButton, recurringType === 'monthly' && styles.recurringButtonActive]} onPress={() => setRecurringType('monthly')}>
-                <Text style={recurringType === 'monthly' ? styles.recurringTextActive : styles.recurringText}>Monthly</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <View style={styles.switchRow}>
-            <Text style={styles.label}>Virtual Meeting</Text>
-            <Switch
-              value={isVirtual}
-              onValueChange={setIsVirtual}
-              trackColor={{ false: "#767577", true: "#b39ddb" }}
-              thumbColor={isVirtual ? "#6200ee" : "#f4f3f4"}
-            />
-          </View>
-
-          {isVirtual ? (
-            <View>
-              <Text style={styles.label}>Meeting Link</Text>
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Create Meeting</Text>
+        <TouchableOpacity onPress={createMeeting} style={styles.createButton}>
+          <Text style={styles.createButtonText}>Create</Text>
+          <Icon name="checkmark-circle" size={18} color="white" style={styles.createIcon} />
+        </TouchableOpacity>
+      </View>
+      
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
+      >
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+          <View style={styles.formContainer}>
+            <View style={styles.formCard}>
+              <View style={styles.iconLabelContainer}>
+                <Icon name="briefcase-outline" size={20} color="#5C00EA" />
+                <Text style={styles.label}>Meeting Title*</Text>
+              </View>
               <TextInput
                 style={styles.input}
-                value={meetingLink}
-                onChangeText={setMeetingLink}
-                placeholder="Enter virtual meeting link"
+                value={title}
+                onChangeText={setTitle}
+                placeholder="Enter meeting title"
+                placeholderTextColor="#A0A0A0"
+              />
+
+              <View style={styles.iconLabelContainer}>
+                <Icon name="document-text-outline" size={20} color="#5C00EA" />
+                <Text style={styles.label}>Description</Text>
+              </View>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Enter meeting description"
+                placeholderTextColor="#A0A0A0"
+                multiline
+                numberOfLines={4}
+              />
+
+              <View style={styles.cardDivider} />
+
+              <View style={styles.iconLabelContainer}>
+                <Icon name="calendar-outline" size={20} color="#5C00EA" />
+                <Text style={styles.sectionTitle}>Date & Time</Text>
+              </View>
+
+              <View style={styles.dateTimeContainer}>
+                <View style={styles.dateTimePicker}>
+                  <Text style={styles.dateTimeLabel}>Start:</Text>
+                  <TouchableOpacity 
+                    style={styles.dateTimeButton} 
+                    onPress={() => setShowStartPicker(true)}
+                  >
+                    <Icon name="time-outline" size={18} color="#5C00EA" style={styles.dateTimeIcon} />
+                    <Text style={styles.dateTimeButtonText}>
+                      {formatDate(startDate)} {formatTime(startDate)}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.dateTimePicker}>
+                  <Text style={styles.dateTimeLabel}>End:</Text>
+                  <TouchableOpacity 
+                    style={styles.dateTimeButton} 
+                    onPress={() => setShowEndPicker(true)}
+                  >
+                    <Icon name="time-outline" size={18} color="#5C00EA" style={styles.dateTimeIcon} />
+                    <Text style={styles.dateTimeButtonText}>
+                      {formatDate(endDate)} {formatTime(endDate)}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              {showStartPicker && (
+                <DateTimePicker 
+                  value={startDate} 
+                  mode="datetime" 
+                  display="default" 
+                  onChange={handleStartDateChange} 
+                />
+              )}
+              {showEndPicker && (
+                <DateTimePicker 
+                  value={endDate} 
+                  mode="datetime" 
+                  display="default" 
+                  onChange={handleEndDateChange} 
+                  minimumDate={startDate} 
+                />
+              )}
+
+              <View style={styles.cardDivider} />
+
+              <View style={styles.switchRow}>
+                <View style={styles.switchLabelContainer}>
+                  <Icon name="repeat-outline" size={20} color="#5C00EA" />
+                  <Text style={styles.switchLabel}>Recurring Meeting</Text>
+                </View>
+                <Switch
+                  value={isRecurring}
+                  onValueChange={setIsRecurring}
+                  trackColor={{ false: "#E0E0E0", true: "#D1C4E9" }}
+                  thumbColor={isRecurring ? "#5C00EA" : "#f4f3f4"}
+                  ios_backgroundColor="#E0E0E0"
+                />
+              </View>
+
+              {isRecurring && (
+                <View style={styles.recurringOptions}>
+                  {renderRecurringButton('daily', 'Daily', 'today-outline')}
+                  {renderRecurringButton('weekly', 'Weekly', 'calendar-outline')}
+                  {renderRecurringButton('monthly', 'Monthly', 'calendar-clear-outline')}
+                </View>
+              )}
+
+              <View style={styles.cardDivider} />
+
+              <View style={styles.switchRow}>
+                <View style={styles.switchLabelContainer}>
+                  <Icon name="videocam-outline" size={20} color="#5C00EA" />
+                  <Text style={styles.switchLabel}>Virtual Meeting</Text>
+                </View>
+                <Switch
+                  value={isVirtual}
+                  onValueChange={setIsVirtual}
+                  trackColor={{ false: "#E0E0E0", true: "#D1C4E9" }}
+                  thumbColor={isVirtual ? "#5C00EA" : "#f4f3f4"}
+                  ios_backgroundColor="#E0E0E0"
+                />
+              </View>
+
+              {isVirtual ? (
+                <View>
+                  <View style={styles.iconLabelContainer}>
+                    <Icon name="link-outline" size={20} color="#5C00EA" />
+                    <Text style={styles.label}>Meeting Link</Text>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={meetingLink}
+                    onChangeText={setMeetingLink}
+                    placeholder="Enter virtual meeting link"
+                    placeholderTextColor="#A0A0A0"
+                    autoCapitalize="none"
+                  />
+                </View>
+              ) : (
+                <View>
+                  <View style={styles.iconLabelContainer}>
+                    <Icon name="location-outline" size={20} color="#5C00EA" />
+                    <Text style={styles.label}>Location</Text>
+                  </View>
+                  <TextInput
+                    style={styles.input}
+                    value={location}
+                    onChangeText={setLocation}
+                    placeholder="Enter meeting location"
+                    placeholderTextColor="#A0A0A0"
+                  />
+                </View>
+              )}
+
+              <View style={styles.cardDivider} />
+
+              <View style={styles.iconLabelContainer}>
+                <Icon name="people-outline" size={20} color="#5C00EA" />
+                <Text style={styles.label}>Attendees (comma separated)</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                value={attendees}
+                onChangeText={setAttendees}
+                placeholder="email1@example.com, email2@example.com"
+                placeholderTextColor="#A0A0A0"
                 autoCapitalize="none"
               />
             </View>
-          ) : (
-            <View>
-              <Text style={styles.label}>Location</Text>
-              <TextInput
-                style={styles.input}
-                value={location}
-                onChangeText={setLocation}
-                placeholder="Enter meeting location"
-              />
-            </View>
-          )}
-
-          <Text style={styles.label}>Attendees (comma separated)</Text>
-          <TextInput
-            style={styles.input}
-            value={attendees}
-            onChangeText={setAttendees}
-            placeholder="email1@example.com, email2@example.com"
-            autoCapitalize="none"
-          />
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#e0e0e0', backgroundColor: 'white' },
-  backButton: { padding: 8 },
-  headerTitle: { fontSize: 20, fontWeight: 'bold' },
-  createButton: { backgroundColor: '#6200ee', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 4 },
-  createButtonText: { color: 'white', fontWeight: 'bold' },
-  formContainer: { padding: 16 },
-  label: { fontSize: 16, fontWeight: '500', marginTop: 16, marginBottom: 4 },
-  input: { backgroundColor: 'white', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16 },
-  textArea: { height: 100, textAlignVertical: 'top' },
-  dateTimeSection: { marginTop: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  dateTimePicker: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
-  dateTimeLabel: { fontSize: 16, width: 60 },
-  dateTimeButton: { backgroundColor: 'white', borderWidth: 1, borderColor: '#e0e0e0', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, flex: 1 },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
-  recurringOptions: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 8 },
-  recurringButton: { backgroundColor: '#e0e0e0', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20 },
-  recurringButtonActive: { backgroundColor: '#6200ee' },
-  recurringText: { color: '#000', fontSize: 14 },
-  recurringTextActive: { color: '#fff', fontSize: 14 },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F5F7FA' 
+  },
+  keyboardView: {
+    flex: 1
+  },
+  scrollView: {
+    flex: 1
+  },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingVertical: 16, 
+    paddingHorizontal: 16, 
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1, 
+    borderBottomColor: '#EEEEEE',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+  },
+  backButton: { 
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F0F0F0',
+  },
+  headerTitle: { 
+    fontSize: 20, 
+    fontWeight: 'bold',
+    color: '#333333'
+  },
+  createButton: { 
+    backgroundColor: '#5C00EA', 
+    paddingVertical: 8, 
+    paddingHorizontal: 16, 
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#5C00EA',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  createButtonText: { 
+    color: 'white', 
+    fontWeight: 'bold',
+    marginRight: 4
+  },
+  createIcon: {
+    marginLeft: 4
+  },
+  formContainer: { 
+    padding: 16 
+  },
+  formCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  iconLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 4
+  },
+  label: { 
+    fontSize: 16, 
+    fontWeight: '500', 
+    marginLeft: 8,
+    color: '#333333'
+  },
+  input: { 
+    backgroundColor: '#F9F9F9', 
+    borderWidth: 1, 
+    borderColor: '#EEEEEE', 
+    borderRadius: 12, 
+    paddingHorizontal: 12, 
+    paddingVertical: 12, 
+    fontSize: 16,
+    color: '#333333'
+  },
+  textArea: { 
+    height: 100, 
+    textAlignVertical: 'top' 
+  },
+  sectionTitle: { 
+    fontSize: 18, 
+    fontWeight: '600', 
+    marginLeft: 8,
+    color: '#333333'
+  },
+  dateTimeContainer: {
+    marginTop: 8
+  },
+  dateTimePicker: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 12 
+  },
+  dateTimeLabel: { 
+    fontSize: 16, 
+    width: 60,
+    color: '#555555'
+  },
+  dateTimeButton: { 
+    backgroundColor: '#F9F9F9', 
+    borderWidth: 1, 
+    borderColor: '#EEEEEE', 
+    borderRadius: 12, 
+    paddingHorizontal: 12, 
+    paddingVertical: 12, 
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  dateTimeIcon: {
+    marginRight: 8
+  },
+  dateTimeButtonText: {
+    color: '#333333',
+    fontSize: 15
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: '#EEEEEE',
+    marginVertical: 16
+  },
+  switchRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center'
+  },
+  switchLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  switchLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginLeft: 8,
+    color: '#333333'
+  },
+  recurringOptions: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    marginTop: 12,
+    marginBottom: 4
+  },
+  recurringButton: { 
+    backgroundColor: '#F5F5F5', 
+    paddingVertical: 8, 
+    paddingHorizontal: 16, 
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E5E5'
+  },
+  recurringButtonActive: { 
+    backgroundColor: '#5C00EA',
+    borderColor: '#5C00EA' 
+  },
+  recurringIcon: {
+    marginRight: 6
+  },
+  recurringText: { 
+    color: '#555555', 
+    fontSize: 14,
+    fontWeight: '500'
+  },
+  recurringTextActive: { 
+    color: '#fff', 
+    fontSize: 14,
+    fontWeight: '500'
+  }
 });
 
 export default Meeting;
