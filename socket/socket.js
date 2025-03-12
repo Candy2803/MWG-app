@@ -12,18 +12,21 @@ const io = socketIo(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
-
-  // Listen for messages
-  socket.on("sendMessage", (data) => {
-    console.log("Received message:", data);
-    io.emit("message", data);
+    console.log("A user connected:", socket.id);
+    // Send existing messages to the newly connected client
+    socket.emit("existingMessages", messages);
+  
+    // Listen for incoming messages
+    socket.on("sendMessage", (message) => {
+      console.log("Received message:", message);
+      messages.push(message);
+      io.emit("message", message);
+    });
+  
+    socket.on("disconnect", () => {
+      console.log("A user disconnected:", socket.id);
+    });
   });
-
-  socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
-  });
-});
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Socket server running on port ${PORT}`));
