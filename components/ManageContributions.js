@@ -14,7 +14,7 @@ import {
 import axios from "axios";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
-const BASE_URL = "https://mwg-app-api.vercel.app/api";
+const BASE_URL = "http://192.168.0.107:5000/api";
 
 const ManageContributions = () => {
   const [users, setUsers] = useState([]);

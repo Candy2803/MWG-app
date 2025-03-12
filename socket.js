@@ -1,6 +1,6 @@
 // socket.js
 import io from 'socket.io-client';
 
-const socket = io("https://mwg-app-api.onrender.com");
+const socket = io("http://192.168.0.107:5000");
 
 export default socket;

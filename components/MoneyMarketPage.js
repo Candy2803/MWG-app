@@ -53,7 +53,7 @@ const MoneyMarketPage = () => {
 
       // Upload to your server
       const response = await axios.post(
-        "https://mwg-app-api.vercel.app/upload",
+        "http://192.168.0.107:5000/upload",
         formData,
         {
           headers: {

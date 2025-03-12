@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const http = require("http");
+const socketIo = require("socket.io");
 
 // Route imports (make sure these exist in your project)
 const userRoutes = require("./routes/user");
@@ -15,9 +16,9 @@ dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
-
-// Initialize Socket.io by importing your socket logic
-const io = require("./socket")(server);
+const io = socketIo(server, {
+  cors: { origin: "*", methods: ["GET", "POST"] }
+});
 
 // Middleware
 app.use(cors());
@@ -39,6 +40,9 @@ app.use("/api/users", userRoutes);
 app.use("/api/contributions", contributionRoutes);
 app.use("/api/reset", resetPasswordRoutes);
 
+// In-memory messages storage for Socket.io
+let messages = [];
+
 // ----- File Upload Endpoints ----- //
 
 // Upload PDF file
@@ -54,7 +58,6 @@ app.post("/upload", upload.single("pdf"), async (req, res) => {
       folder: "pdf_uploads",
     });
 
-    // Emit upload success message
     const message = { id: Date.now(), url: result.secure_url };
     io.emit("uploadSuccess", message);
 
@@ -153,7 +156,26 @@ app.post("/uploadFile", upload.single("file"), async (req, res) => {
 
 // Fetch Messages Route (for clients connecting via Socket.io)
 app.get("/messages", (req, res) => {
-  res.json([]); // You might opt to fetch messages from a DB or leave it empty
+  res.json(messages);
+});
+
+// ----- Socket.io Setup ----- //
+
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
+  // Send existing messages to the newly connected client
+  socket.emit("existingMessages", messages);
+
+  // Listen for incoming messages
+  socket.on("sendMessage", (message) => {
+    console.log("Received message:", message);
+    messages.push(message);
+    io.emit("message", message);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("A user disconnected:", socket.id);
+  });
 });
 
 // ----- MongoDB Connection ----- //
