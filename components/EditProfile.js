@@ -57,63 +57,82 @@ const EditProfile = ({ navigation }) => {
         name: `profile_${Date.now()}.jpg`,
         type: "image/jpeg",
       });
-      console.log("Uploading image to server...");
-
+  
       // Upload to Cloudinary via your server
       const uploadResponse = await axios.post(
         "http://192.168.1.201:4000/uploadProfilePicture",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
-      console.log("Upload response:", uploadResponse.data);
-
+  
       if (uploadResponse.data && uploadResponse.data.url) {
         const newImageUrl = uploadResponse.data.url;
-        // Update the user's profile image in the database
+        
+        // Update user profile with new image URL
         const updateResponse = await axios.put(
-          `http://192.168.1.201:4000/api/users/${user._id}`,
+          `http://192.168.1.201:5000/api/users/${user._id}`,
           { profileImage: newImageUrl },
           { headers: { "Content-Type": "application/json" } }
         );
-        console.log("User update response:", updateResponse.data);
-
+  
         if (updateResponse.status === 200) {
           updateUser({ ...user, profileImage: newImageUrl });
           Alert.alert("Success", "Profile picture updated.");
-        } else {
-          Alert.alert("Error", "Failed to update profile picture in the database.");
         }
-      } else {
-        Alert.alert("Error", "Failed to upload profile picture.");
       }
     } catch (error) {
-      console.error("Error uploading profile picture:", error.response || error);
+      console.error("Error uploading profile picture:", error);
       Alert.alert("Error", "Failed to upload profile picture: " + error.message);
     }
   };
-
   const handleSave = async () => {
     if (!name || !email || !phone) {
       Alert.alert("Error", "Please fill all profile fields");
       return;
     }
-    if (newPassword !== confirmPassword) {
-      Alert.alert("Error", "New passwords do not match");
-      return;
-    }
+    
     try {
+      // Create the updated profile object
       const updatedProfile = {
         name,
         email,
         phone,
         profileImage,
       };
-      updateUser(updatedProfile);
-      Alert.alert("Success", "Profile updated successfully!");
-      navigation.goBack();
+  
+      // Make sure user._id exists
+      if (!user?._id) {
+        Alert.alert("Error", "User ID not found");
+        return;
+      }
+  
+      // Log the request details for debugging
+      console.log("Updating user with ID:", user._id);
+      console.log("Update data:", updatedProfile);
+  
+      // Make API call to update user in database
+      const response = await axios.put(
+        `http://192.168.1.201:5000/api/users/${user._id}/update`, // Updated endpoint
+        updatedProfile,
+        {
+          headers: { 
+            "Content-Type": "application/json"
+          }
+        }
+      );
+  
+      if (response.status === 200) {
+        // Update local user state
+        updateUser(updatedProfile);
+        Alert.alert("Success", "Profile updated successfully!");
+        navigation.goBack();
+      }
     } catch (error) {
-      console.error("Update error:", error);
-      Alert.alert("Error", "Failed to update profile. Please try again.");
+      console.error("Update error:", error.response || error);
+      Alert.alert(
+        "Error", 
+        `Failed to update profile: ${error.response?.data?.message || error.message}`
+      );
     }
   };
 

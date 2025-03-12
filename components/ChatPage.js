@@ -1,4 +1,3 @@
-// ChatPage.js
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -15,7 +14,7 @@ import {
 } from "react-native";
 import Icon from "react-native-vector-icons/Ionicons";
 import { useAuth } from "../Auth/AuthContext";
-import socket from "../socket"; // Use shared socket instance
+import socket from "../socket"; // Shared socket instance
 import * as FileSystem from "expo-file-system";
 import * as WebBrowser from "expo-web-browser";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -82,12 +81,13 @@ const ChatPage = () => {
     };
 
     const handleMessageReceived = (newMessage) => {
-      console.log("Received message:", newMessage);
-      if (Array.isArray(newMessage)) {
-        setMessages(newMessage);
-      } else {
-        setMessages((prev) => [...prev, newMessage]);
-      }
+      console.log("ChatPage received message:", newMessage);
+      setMessages((prev) => {
+        if (prev.find((msg) => msg.id === newMessage.id)) {
+          return prev;
+        }
+        return [...prev, newMessage];
+      });
     };
 
     socket.on("connect", handleConnect);
@@ -114,19 +114,21 @@ const ChatPage = () => {
     }, [fileUrl, isConnected, fileShared])
   );
 
-  const generateUniqueId = () => `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const generateUniqueId = () =>
+    `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
+  // Send text message without optimistic update
   const sendMessage = () => {
     if (message.trim() !== "") {
       const newMsg = {
         id: generateUniqueId(),
         text: message,
         userName: user.name,
+        profileImage: user.profileImage,
         timestamp: new Date().toISOString(),
         type: "text",
       };
       socket.emit("sendMessage", newMsg);
-      setMessages((prev) => [...prev, newMsg]);
       setMessage("");
     }
   };
@@ -135,7 +137,6 @@ const ChatPage = () => {
     if (!fileUri) return;
     const fileExtension = fileUri.split('.').pop().toLowerCase();
     const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
-    // For videos, we'll set type to "video"
     const type = isImage ? "image" : (fileExtension === "mp4" ? "video" : "file");
     const fileMsg = {
       id: generateUniqueId(),
@@ -143,6 +144,7 @@ const ChatPage = () => {
       fileUri,
       fileName: fileName || fileUri.split("/").pop(),
       userName: user.name,
+      profileImage: user.profileImage,
       timestamp: new Date().toISOString(),
       text: `${user.name} shared ${isImage ? 'an image' : type === "video" ? 'a video' : 'a file'}: ${fileName || fileUri.split("/").pop()}`,
     };
@@ -210,17 +212,51 @@ const ChatPage = () => {
     }
   };
 
+  // Handle long press to delete message (only if current user's message)
+  const handleLongPressMessage = (messageId, isMyMessage) => {
+    if (!isMyMessage) return;
+    Alert.alert("Delete Message", "Do you want to delete this message?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
+          // Optionally: socket.emit("deleteMessage", { id: messageId });
+        },
+      },
+    ]);
+  };
+
   const renderMessage = (item) => {
+    const isMyMessage = item.userName === user.name;
+    return (
+      <TouchableOpacity onLongPress={() => handleLongPressMessage(item.id, isMyMessage)}>
+        <View style={[styles.messageContainer, isMyMessage ? styles.selfMessage : styles.receivedMessage]}>
+          <View style={styles.messageContentContainer}>
+            {renderMessageContent(item)}
+          </View>
+          <View style={styles.messageFooter}>
+            {item.profileImage ? (
+              <Image source={{ uri: item.profileImage }} style={styles.messageProfileImage} />
+            ) : (
+              <Icon name="person-circle" size={20} color="#fff" />
+            )}
+            <Text style={styles.userName}>{item.userName}</Text>
+            <Text style={styles.timestamp}>{formatTimestamp(item.timestamp)}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderMessageContent = (item) => {
     if (item.type === "image") {
       return (
-        <View style={[styles.messageContent, item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent]}>
+        <View style={item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent}>
           <Text style={styles.messageText}>Shared an image: {item.fileName}</Text>
           <TouchableOpacity onPress={() => viewImage(item.fileUri)}>
-            <Image 
-              source={{ uri: item.fileUri }} 
-              style={styles.thumbnailImage}
-              resizeMode="cover"
-            />
+            <Image source={{ uri: item.fileUri }} style={styles.thumbnailImage} resizeMode="cover" />
           </TouchableOpacity>
           <View style={styles.fileActionButtons}>
             <TouchableOpacity style={styles.fileButton} onPress={() => downloadFile(item.fileUri)}>
@@ -236,7 +272,7 @@ const ChatPage = () => {
       );
     } else if (item.type === "file") {
       return (
-        <View style={[styles.messageContent, item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent]}>
+        <View style={item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent}>
           <Text style={styles.messageText}>Shared a file: {item.fileName}</Text>
           <View style={styles.fileActionButtons}>
             <TouchableOpacity style={styles.fileButton} onPress={() => downloadFile(item.fileUri)}>
@@ -252,7 +288,7 @@ const ChatPage = () => {
       );
     } else if (item.type === "meeting") {
       return (
-        <View style={[styles.messageContent, item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent]}>
+        <View style={item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent}>
           <Text style={styles.messageText}>📅 Meeting: {item.title}</Text>
           <View style={styles.meetingDetails}>
             <Text style={styles.meetingTime}>
@@ -274,7 +310,7 @@ const ChatPage = () => {
       );
     } else if (item.type === "video") {
       return (
-        <View style={[styles.messageContent, item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent]}>
+        <View style={item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent}>
           <Text style={styles.messageText}>Shared a video: {item.fileName}</Text>
           <Video
             source={{ uri: item.fileUri }}
@@ -301,7 +337,7 @@ const ChatPage = () => {
       );
     } else {
       return (
-        <View style={[styles.messageContent, item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent]}>
+        <View style={item.userName === user.name ? styles.selfMessageContent : styles.receivedMessageContent}>
           <Text style={styles.messageText}>{item.text}</Text>
         </View>
       );
@@ -321,15 +357,7 @@ const ChatPage = () => {
       <FlatList
         data={messages}
         keyExtractor={(item) => item.id || item.timestamp || Math.random().toString()}
-        renderItem={({ item }) => (
-          <View style={[styles.messageContainer, item.userName === user.name ? styles.selfMessage : styles.receivedMessage]}>
-            {renderMessage(item)}
-            <View style={styles.messageFooter}>
-              <Text style={styles.userName}>{item.userName}</Text>
-              <Text style={styles.timestamp}>{formatTimestamp(item.timestamp)}</Text>
-            </View>
-          </View>
-        )}
+        renderItem={({ item }) => renderMessage(item)}
       />
       
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -342,7 +370,11 @@ const ChatPage = () => {
             multiline
             maxLength={500}
           />
-          <TouchableOpacity style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]} onPress={sendMessage} disabled={!message.trim()}>
+          <TouchableOpacity
+            style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
+            onPress={sendMessage}
+            disabled={!message.trim()}
+          >
             <Icon name="send" size={24} color="white" />
           </TouchableOpacity>
         </View>
@@ -369,36 +401,105 @@ const ChatPage = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5", padding: 16 },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#e0e0e0", marginBottom: 16 },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    marginBottom: 16,
+  },
   title: { fontSize: 22, fontWeight: "bold" },
   connectionStatus: { flexDirection: "row", alignItems: "center" },
   statusDot: { width: 8, height: 8, borderRadius: 4, marginRight: 6 },
   statusText: { fontSize: 14, color: "#757575" },
-  messageContainer: { marginBottom: 16, maxWidth: "80%", alignSelf: "flex-start" },
-  selfMessage: { alignSelf: "flex-end" },
-  receivedMessage: { alignSelf: "flex-start" },
-  messageContent: { padding: 12, borderRadius: 16, marginVertical: 2 },
-  selfMessageContent: { backgroundColor: "#0084FF", borderTopRightRadius: 4 },
-  receivedMessageContent: { backgroundColor: "#6200ee", borderTopLeftRadius: 4 },
+  messageContainer: {
+    marginBottom: 16,
+    maxWidth: "80%",
+    alignSelf: "flex-start",
+    // Chat bubble container styling
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: "#e1ffc7", // Light green for received messages
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    elevation: 2,
+  },
+  selfMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: "#cfe9ff", // Light blue for own messages
+  },
+  receivedMessage: {
+    alignSelf: "flex-start",
+  },
+  messageContentContainer: { marginBottom: 4 },
+  selfMessageContent: { backgroundColor: "#0084FF", borderRadius: 12, padding: 8 },
+  receivedMessageContent: { backgroundColor: "#6200ee", borderRadius: 12, padding: 8 },
   messageText: { color: "white", fontSize: 16 },
-  thumbnailImage: { width: 200, height: 150, borderRadius: 8, marginTop: 8, marginBottom: 8 },
-  fileActionButtons: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 },
-  fileButton: { flexDirection: "row", alignItems: "center", backgroundColor: "rgba(0, 0, 0, 0.2)", padding: 8, borderRadius: 16, flex: 1, marginHorizontal: 2, justifyContent: "center" },
+  thumbnailImage: { width: 200, height: 150, borderRadius: 8, marginVertical: 8 },
+  fileActionButtons: { flexDirection: "row", justifyContent: "space-around", marginTop: 8 },
+  fileButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    padding: 6,
+    borderRadius: 12,
+    justifyContent: "center",
+  },
   fileButtonText: { color: "white", fontSize: 14, marginLeft: 4 },
-  messageFooter: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4, paddingHorizontal: 2 },
-  userName: { fontWeight: "bold", fontSize: 12, color: "#424242" },
+  messageFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  messageProfileImage: { width: 20, height: 20, borderRadius: 10, marginRight: 5 },
+  userName: { fontWeight: "bold", fontSize: 12, color: "#424242", marginRight: 5 },
   timestamp: { fontSize: 10, color: "#9E9E9E" },
-  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "white", borderRadius: 24, padding: 4, marginBottom: Platform.OS === "ios" ? 50 : 8, borderWidth: 1, borderColor: "#e0e0e0" },
-  input: { flex: 1, paddingHorizontal: 16, paddingVertical: 10, fontSize: 16, maxHeight: 100 },
-  sendButton: { backgroundColor: "#6200ee", padding: 10, borderRadius: 24, marginLeft: 8, marginRight: 4 },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "white",
+    borderRadius: 24,
+    padding: 8,
+    marginBottom: Platform.OS === "ios" ? 50 : 8,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  input: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    fontSize: 16,
+    maxHeight: 100,
+  },
+  sendButton: {
+    backgroundColor: "#6200ee",
+    padding: 10,
+    borderRadius: 24,
+    marginLeft: 8,
+    marginRight: 4,
+  },
   sendButtonDisabled: { backgroundColor: "#B39DDB" },
-  modalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center' },
-  modalCloseButton: { position: 'absolute', top: 40, right: 20, zIndex: 1 },
-  fullSizeImage: { width: '90%', height: '80%' },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalCloseButton: {
+    position: "absolute",
+    top: 40,
+    right: 20,
+    zIndex: 1,
+  },
+  fullSizeImage: { width: "90%", height: "80%" },
   meetingDetails: { marginTop: 8, marginBottom: 8 },
-  meetingTime: { color: 'white', fontSize: 14, marginBottom: 4 },
-  meetingLocation: { color: 'white', fontSize: 14, marginBottom: 4 },
-  meetingRecurring: { color: 'white', fontSize: 14, fontStyle: 'italic' },
+  meetingTime: { color: "white", fontSize: 14, marginBottom: 4 },
+  meetingLocation: { color: "white", fontSize: 14, marginBottom: 4 },
+  meetingRecurring: { color: "white", fontSize: 14, fontStyle: "italic" },
   videoPlayer: { width: 300, height: 200, borderRadius: 8, backgroundColor: "black", marginVertical: 8 },
 });
 

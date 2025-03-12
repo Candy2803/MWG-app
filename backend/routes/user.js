@@ -21,20 +21,61 @@ router.get('/', async (req, res) => {
 // In your routes file (for example, userRoutes.js)
 router.put('/:id', async (req, res) => {
   try {
-    // Extract profileImage (and any other fields) from the request body
     const { profileImage, ...otherFields } = req.body;
+    
+    // Update user with profile image
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { ...otherFields, profileImage },
+      { 
+        ...otherFields,
+        profileImage // Ensure profileImage is included in update
+      },
       { new: true }
     );
+
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
+
     res.status(200).send({ user });
   } catch (error) {
     console.error("Error updating user:", error);
     res.status(500).send({ message: "Error updating user", error: error.message });
+  }
+});
+
+// Remove the duplicate PUT route and keep only this one
+router.put('/:id/update', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Log the update attempt
+    console.log("Attempting to update user:", id);
+    console.log("Update data:", updateData);
+
+    const user = await User.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+
+    if (!user) {
+      console.log("User not found:", id);
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    console.log("User updated successfully:", user);
+    res.status(200).send({ 
+      message: 'User updated successfully',
+      user 
+    });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).send({ 
+      message: "Error updating user", 
+      error: error.message 
+    });
   }
 });
 

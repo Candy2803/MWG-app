@@ -14,7 +14,6 @@ import Profile from "./components/Profile";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
 import EditProfile from "./components/EditProfile";
-import Support from "./components/Support";
 import ChatPage from "./components/ChatPage";
 import Admin from "./components/Admin";
 import ManageUsers from "./components/ManageUsers";
@@ -75,7 +74,6 @@ function AppNavigator() {
           <Stack.Screen name="Contribution" component={Contribution} />
           <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen name="EditProfile" component={EditProfile} />
-          <Stack.Screen name="Support" component={Support} />
           <Stack.Screen name="Chat" component={ChatPage} />
         </>
       ) : (
