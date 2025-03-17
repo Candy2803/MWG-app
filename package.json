@@ -28,6 +28,7 @@
     "expo-av": "^15.0.2",
     "expo-blur": "^14.0.3",
     "expo-calendar": "^14.0.6",
+    "expo-device": "^7.0.2",
     "expo-document-picker": "~13.0.3",
     "expo-file-system": "~18.0.11",
     "expo-image-picker": "~16.0.6",

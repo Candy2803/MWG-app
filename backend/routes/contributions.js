@@ -16,41 +16,22 @@ router.get("/users", async (req, res) => {
       return res.status(200).send({ message: "No users found", users: [] });
     }
 
-    // Aggregate total contributions for each user
-    const usersWithContributions = await Promise.all(
-      users.map(async (user) => {
-        const totalContributions = await Contribution.aggregate([
-          { $match: { userId: user._id } }, // Match contributions by userId
-          {
-            $group: {
-              _id: null,
-              total: { $sum: "$amount" }, // Sum the amount field
-            },
-          },
-        ]);
+    // Map each user to include only _id and userName
+    const usersData = users.map(user => ({
+      _id: user._id,
+      userName: user.name
+    }));
 
-        return {
-          _id: user._id,
-          userName: user.name,
-          totalContributions:
-            totalContributions.length > 0 ? totalContributions[0].total : 0,
-        };
-      })
-    );
-
-    console.log(
-      "Fetched users with total contributions:",
-      usersWithContributions
-    );
+    console.log("Fetched users:", usersData);
 
     res.status(200).send({
-      message: "Users and total contributions fetched successfully",
-      users: usersWithContributions,
+      message: "Users fetched successfully",
+      users: usersData,
     });
   } catch (error) {
-    console.error("Error fetching users and contributions:", error);
+    console.error("Error fetching users:", error);
     res.status(500).send({
-      message: "Error fetching users and contributions",
+      message: "Error fetching users",
       error: error.message,
     });
   }

@@ -16,13 +16,14 @@ const ContributionSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['mpesa', 'credit', 'bank_transfer'], 
+    required: true,
+    default: 'mpesa'
   },
   contributionDate: {
     type: Date,
     default: Date.now,
   },
-});
+}, { timestamps: true });
 
 ContributionSchema.pre('save', async function (next) {
   if (this.isModified('userId')) {

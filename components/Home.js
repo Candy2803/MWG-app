@@ -110,7 +110,7 @@ const Home = ({ navigation }) => {
               { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
             ]}
           >
-            <Text style={styles.title}>MWG Welfare</Text>
+            <Text style={styles.title}>MWG App</Text>
             <Text style={styles.subtitle}></Text>
 
             <View style={styles.cardsContainer}>

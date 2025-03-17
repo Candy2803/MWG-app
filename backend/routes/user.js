@@ -324,7 +324,58 @@ router.post('/:userId/contributions', async (req, res) => {
   }
 });
 
+router.get("/users", async (req, res) => {
+  try {
+    // Fetch all users from your database.
+    const users = await User.find();
 
+    if (users.length === 0) {
+      return res.status(200).send({ message: "No users found", users: [] });
+    }
+
+    // For each user, fetch their transactions from the M-PESA endpoint
+    // and calculate the total amount.
+    const usersWithTotals = await Promise.all(
+      users.map(async (user) => {
+        try {
+          // Fetch the transactions for the user.
+          const response = await axios.get(
+            `https://mpesa-c874.vercel.app/api/mpesa/transactions/${user._id}?t=${Date.now()}`
+          );
+          // Assume the transactions are in response.data.data.
+          const transactions = response.data.data || [];
+          // Sum the amounts.
+          const total = transactions.reduce((sum, tx) => sum + (tx.amount || 0), 0);
+          return {
+            _id: user._id,
+            userName: user.name,
+            totalContributions: total,
+          };
+        } catch (err) {
+          console.error(`Error fetching transactions for user ${user._id}:`, err.message);
+          // If fetching transactions fails for a user, default the total to 0.
+          return {
+            _id: user._id,
+            userName: user.name,
+            totalContributions: 0,
+          };
+        }
+      })
+    );
+
+    console.log("Fetched users with totals:", usersWithTotals);
+    res.status(200).send({
+      message: "Users with transaction totals fetched successfully",
+      users: usersWithTotals,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error.message);
+    res.status(500).send({
+      message: "Error fetching users and their transaction totals",
+      error: error.message,
+    });
+  }
+});
 
 
 module.exports = router;

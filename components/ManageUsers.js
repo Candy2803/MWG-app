@@ -16,7 +16,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import axios from "axios";
 import { useNavigation } from "@react-navigation/native";
 
-const BASE_URL = "http://192.168.0.107:5000/api";
+const BASE_URL = "https://mwg-app-api.vercel.app/api";
 
 const ManageUsers = () => {
   const [users, setUsers] = useState([]);

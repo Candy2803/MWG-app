@@ -10,11 +10,13 @@ import {
   SafeAreaView,
   StatusBar,
   Image,
+  Dimensions,
+  KeyboardAvoidingView,
 } from "react-native";
 import axios from "axios";
 import Icon from "react-native-vector-icons/MaterialIcons";
 
-const BASE_URL = "http://192.168.0.107:5000/api";
+const BASE_URL = "https://mwg-app-api.vercel.app/api";
 
 const ManageContributions = () => {
   const [users, setUsers] = useState([]);
@@ -26,38 +28,67 @@ const ManageContributions = () => {
   const [totalAmount, setTotalAmount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Fetch users from your contributions/users endpoint (which does not include contributions)
   useEffect(() => {
     fetchUsers();
   }, []);
-
-  useEffect(() => {
-    if (users.length > 0) {
-      const total = users.reduce((sum, user) => sum + user.totalContributions, 0);
-      setTotalAmount(total);
-    }
-  }, [users]);
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${BASE_URL}/contributions/users`);
-      setUsers(response.data.users.filter(user => 
-        user.userName.toLowerCase() !== "admin"));
-      setLoading(false);
+      // Filter out admin if needed.
+      const fetchedUsers = response.data.users.filter(
+        (user) => user.userName.toLowerCase() !== "admin"
+      );
+      setUsers(fetchedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
+    } finally {
       setLoading(false);
     }
   };
 
+  // For each user, fetch their transactions from the MPESA endpoint and sum the amounts
+  useEffect(() => {
+    if (users.length > 0) {
+      const fetchAllTotals = async () => {
+        try {
+          const totals = await Promise.all(
+            users.map(async (user) => {
+              const res = await axios.get(
+                `https://mpesa-c874.vercel.app/api/mpesa/transactions/${user._id}?t=${Date.now()}`
+              );
+              const transactions = res.data.data || [];
+              return transactions.reduce(
+                (acc, txn) => acc + (txn.amount || 0),
+                0
+              );
+            })
+          );
+          const sumTotals = totals.reduce((acc, t) => acc + t, 0);
+          setTotalAmount(sumTotals);
+        } catch (error) {
+          console.error("Error calculating total funds:", error);
+        }
+      };
+      fetchAllTotals();
+    }
+  }, [users]);
+
+  // Fetch a single user's contributions from the MPESA transactions endpoint
   const fetchUserContributions = async (userId) => {
     setLoadingContributions(true);
     try {
-      const response = await axios.get(`${BASE_URL}/contributions/${userId}/contributions`);
-      setUserContributions(response.data.contributions);
-      setLoadingContributions(false);
+      const response = await axios.get(
+        `https://mpesa-c874.vercel.app/api/mpesa/transactions/${userId}?t=${Date.now()}`
+      );
+      console.log("Response from transactions endpoint:", response.data);
+      const contributions = response.data.data || [];
+      setUserContributions(contributions);
     } catch (error) {
       console.error("Error fetching contributions:", error);
+    } finally {
       setLoadingContributions(false);
     }
   };
@@ -71,32 +102,37 @@ const ManageContributions = () => {
     setRefreshing(false);
   };
 
-  const filteredUsers = users.filter(
-    (user) => user.userName.toLowerCase().includes(searchQuery.toLowerCase())
+  // Filter users based on search query
+  const filteredUsers = users.filter((user) =>
+    user.userName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Format currency function
   const formatCurrency = (amount) => {
     return `KES ${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
   };
 
+  // Format date function
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    const options = { year: "numeric", month: "short", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
+  // Return a suitable icon name based on the payment method (default to "payment")
   const getPaymentMethodIcon = (method) => {
     switch (method.toLowerCase()) {
-      case 'mpesa':
-        return 'phone-android';
-      case 'cash':
-        return 'attach-money';
-      case 'bank':
-        return 'account-balance';
+      case "mpesa":
+        return "phone-android";
+      case "cash":
+        return "attach-money";
+      case "bank":
+        return "account-balance";
       default:
-        return 'payment';
+        return "payment";
     }
   };
 
+  // Render a user item in the list. Also show their total transactions (if available)
   const renderUserItem = ({ item }) => (
     <TouchableOpacity
       style={styles.userCard}
@@ -107,50 +143,78 @@ const ManageContributions = () => {
     >
       <View style={styles.userCardContent}>
         <View style={styles.userAvatar}>
-          <Text style={styles.userInitial}>{item.userName.charAt(0).toUpperCase()}</Text>
+          <Text style={styles.userInitial}>
+            {item.userName.charAt(0).toUpperCase()}
+          </Text>
         </View>
         <View style={styles.userInfo}>
           <Text style={styles.userName}>{item.userName}</Text>
-          <Text style={styles.totalContribution}>
-            {formatCurrency(item.totalContributions)}
-          </Text>
+          {/*
+            Optionally, if your user object has a totalContributions property, you could show it.
+            But here we'll rely on the MPESA transactions for the selected user.
+            For the main list, we won't display total contributions.
+          */}
         </View>
         <Icon name="chevron-right" size={24} color="#6200ee" />
       </View>
     </TouchableOpacity>
   );
 
-  const renderContributionItem = ({ item }) => (
-    <View style={styles.contributionCard}>
-      <View style={styles.contributionHeader}>
-        <View style={styles.methodIconContainer}>
-          <Icon name={getPaymentMethodIcon(item.paymentMethod)} size={24} color="#fff" />
-        </View>
-        <View style={styles.contributionInfo}>
-          <Text style={styles.contributionAmount}>{formatCurrency(item.amount)}</Text>
-          <Text style={styles.contributionDate}>{formatDate(item.contributionDate)}</Text>
-        </View>
-      </View>
-      <View style={styles.contributionDetails}>
-        <View style={styles.detailItem}>
-          <Icon name="access-time" size={16} color="#888" />
-          <Text style={styles.detailText}>
-            {new Date(item.contributionDate).toLocaleTimeString()}
-          </Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Icon name="payment" size={16} color="#888" />
-          <Text style={styles.detailText}>{item.paymentMethod}</Text>
-        </View>
-        {item.transactionId && (
-          <View style={styles.detailItem}>
-            <Icon name="confirmation-number" size={16} color="#888" />
-            <Text style={styles.detailText}>ID: {item.transactionId}</Text>
+  // Render a single contribution item
+  const renderContributionItem = ({ item }) => {
+    // Default to "Mpesa" if paymentMethod not provided
+    const paymentMethod = item.paymentMethod || "Mpesa";
+    // Use the timestamp field from the MPESA transactions for the contribution date
+    const contributionDate = item.timestamp ? new Date(item.timestamp) : new Date();
+
+    return (
+      <View style={styles.contributionCard}>
+        <View style={styles.contributionHeader}>
+          <View style={styles.methodIconContainer}>
+            <Icon
+              name={getPaymentMethodIcon(paymentMethod)}
+              size={24}
+              color="#fff"
+            />
           </View>
-        )}
+          <View style={styles.contributionInfo}>
+            <Text style={styles.contributionAmount}>
+              {formatCurrency(item.amount)}
+            </Text>
+            <Text style={styles.contributionDate}>
+              {formatDate(contributionDate)}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.contributionDetails}>
+          <View style={styles.detailItem}>
+            <Icon name="access-time" size={16} color="#888" />
+            <Text style={styles.detailText}>
+              {contributionDate.toLocaleTimeString()}
+            </Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Icon name="payment" size={16} color="#888" />
+            <Text style={styles.detailText}>{paymentMethod}</Text>
+          </View>
+          {item.transactionId && (
+            <View style={styles.detailItem}>
+              <Icon name="confirmation-number" size={16} color="#888" />
+              <Text style={styles.detailText}>ID: {item.transactionId}</Text>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
+
+  // Calculate total contributions for a selected user by summing amounts from the fetched transactions
+  const getUserTotalContributions = () => {
+    return userContributions.reduce(
+      (total, contrib) => total + (contrib.amount || 0),
+      0
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -190,7 +254,6 @@ const ManageContributions = () => {
                 </TouchableOpacity>
               )}
             </View>
-
             {loading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#6200ee" />
@@ -233,17 +296,20 @@ const ManageContributions = () => {
                 <Icon name="arrow-back" size={24} color="#fff" />
               </TouchableOpacity>
               <View style={styles.userHistoryTitleContainer}>
-                <Text style={styles.userHistoryTitle}>{selectedUser.userName}</Text>
+                <Text style={styles.userHistoryTitle}>
+                  {selectedUser.userName}
+                </Text>
                 <Text style={styles.userHistorySubtitle}>
-                  Total: {formatCurrency(selectedUser.totalContributions)}
+                  Total: {formatCurrency(getUserTotalContributions())}
                 </Text>
               </View>
             </View>
-
             {loadingContributions ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#6200ee" />
-                <Text style={styles.loadingText}>Loading contributions...</Text>
+                <Text style={styles.loadingText}>
+                  Loading contributions...
+                </Text>
               </View>
             ) : userContributions.length > 0 ? (
               <FlatList

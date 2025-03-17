@@ -39,6 +39,8 @@ const upload = multer({ storage });
 app.use("/api/users", userRoutes);
 app.use("/api/contributions", contributionRoutes);
 app.use("/api/reset", resetPasswordRoutes);
+app.use("/api/contributions", userRoutes);
+
 
 // In-memory messages storage for Socket.io
 let messages = [];

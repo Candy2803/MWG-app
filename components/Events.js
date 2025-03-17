@@ -19,8 +19,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import io from "socket.io-client";
 import axios from "axios";
 
-// Use the same socket connection as ChatPage
-const socket = io("http://192.168.0.107:5000");
+// Use your socket connection URL (make sure it's correct)
+const socket = io("https://aef7-41-139-202-31.ngrok-free.app");
+
+const BASE_URL = "https://mwg-app-api.vercel.app/api";
 
 const Events = () => {
   const navigation = useNavigation();
@@ -35,7 +37,7 @@ const Events = () => {
   // Check if user is admin
   const isAdmin = user && user.role === "admin";
 
-  // Connect to socket server
+  // Connect to socket server (if needed for your app)
   useEffect(() => {
     if (socket.connected) {
       setIsConnected(true);
@@ -62,7 +64,7 @@ const Events = () => {
     };
   }, []);
 
-  // Load events from storage on mount
+  // Load events from AsyncStorage on mount
   useEffect(() => {
     loadEvents();
   }, []);
@@ -162,37 +164,28 @@ const Events = () => {
 
   const uploadMedia = async (uri, type) => {
     if (!uri) return;
-  
     try {
       setUploading(true);
       const formData = new FormData();
-  
-      // Determine field name based on type
       const fieldName = type === "image" ? "image" : "video";
-  
       formData.append(fieldName, {
         uri,
         name: `event_${Date.now()}.${type === "image" ? "jpg" : "mp4"}`,
         type: type === "image" ? "image/jpeg" : "video/mp4",
       });
-  
-      // Use a different endpoint for videos if type is "video"
+      // Use different endpoints based on media type
       const uploadEndpoint =
         type === "video"
-          ? "http://192.168.0.107:5000/uploadVideo"
-          : "http://192.168.0.107:5000/uploadImage";
-  
+          ? "https://mwg-app-api.vercel.app/uploadVideo"
+          : "https://mwg-app-api.vercel.app/uploadImage";
       const response = await axios.post(uploadEndpoint, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-  
-      // Assume response.data.url contains the Cloudinary URL
+      // Assume response.data.url is the URL of the uploaded media
       const serverUrl = response.data.url;
       console.log("Upload response:", response.data);
-  
-      // Create a new event object
       const newEvent = {
         id: Date.now().toString(),
         title: eventTitle,
@@ -202,15 +195,12 @@ const Events = () => {
         timestamp: new Date().toISOString(),
         createdBy: user.name,
       };
-  
       const updatedEvents = [...events, newEvent];
       setEvents(updatedEvents);
       saveEvents(updatedEvents);
-  
       setEventTitle("");
       setEventDescription("");
       setUploading(false);
-  
       Alert.alert("Success", `${type === "image" ? "Image" : "Video"} uploaded successfully.`);
     } catch (error) {
       console.error("Error uploading media:", error.response || error);
@@ -218,21 +208,15 @@ const Events = () => {
       Alert.alert("Error", "Failed to upload media: " + error.message);
     }
   };
-  
-  const shareEventToChat = (event) => {
+
+  // Share the event details to ChatPage (including title, description, and image)
+  const shareEventToChat = (eventObj) => {
     if (!isConnected) {
       Alert.alert("Error", "Not connected to chat server.");
       return;
     }
-
-    // Pass the media URL (either imageUri or videoUri) to ChatPage.
-    const fileUrl = event.imageUri || event.videoUri;
-    const fileName = event.imageUri ? `Event: ${event.title}` : `Video: ${event.title}`;
-
-    navigation.navigate("ChatPage", {
-      fileUrl,
-      fileName,
-    });
+    // Navigate to ChatPage with the event object
+    navigation.navigate("ChatPage", { event: eventObj });
   };
 
   const deleteEvent = async (eventId) => {
@@ -240,28 +224,23 @@ const Events = () => {
       Alert.alert("Permission Denied", "Only admins can delete events.");
       return;
     }
-
-    Alert.alert(
-      "Confirm Delete",
-      "Are you sure you want to delete this event?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const updatedEvents = events.filter(event => event.id !== eventId);
-              setEvents(updatedEvents);
-              await saveEvents(updatedEvents);
-            } catch (error) {
-              console.error("Error deleting event:", error);
-              Alert.alert("Error", "Failed to delete event.");
-            }
+    Alert.alert("Confirm Delete", "Are you sure you want to delete this event?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const updatedEvents = events.filter((event) => event.id !== eventId);
+            setEvents(updatedEvents);
+            await saveEvents(updatedEvents);
+          } catch (error) {
+            console.error("Error deleting event:", error);
+            Alert.alert("Error", "Failed to delete event.");
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
   const renderEvent = ({ item }) => (
@@ -274,34 +253,27 @@ const Events = () => {
           </TouchableOpacity>
         )}
       </View>
-
       {item.description ? (
         <Text style={styles.eventDescription}>{item.description}</Text>
       ) : null}
-
       {item.imageUri ? (
-        <Image 
-          source={{ uri: item.imageUri }} 
+        <Image
+          source={{ uri: item.imageUri }}
           style={styles.eventImage}
           resizeMode="cover"
         />
       ) : null}
-
       {item.videoUri ? (
         <View style={styles.videoPlaceholder}>
           <Icon name="play-circle-outline" size={64} color="#BDBDBD" />
           <Text style={styles.videoLabel}>Video</Text>
         </View>
       ) : null}
-
       <View style={styles.eventFooter}>
         <Text style={styles.eventTimestamp}>
           {new Date(item.timestamp).toLocaleDateString()} by {item.createdBy}
         </Text>
-        <TouchableOpacity 
-          style={styles.shareButton}
-          onPress={() => shareEventToChat(item)}
-        >
+        <TouchableOpacity style={styles.shareButton} onPress={() => shareEventToChat(item)}>
           <Icon name="share-social-outline" size={18} color="white" />
           <Text style={styles.shareButtonText}>Share to Chat</Text>
         </TouchableOpacity>
@@ -339,11 +311,7 @@ const Events = () => {
             maxLength={200}
           />
           <View style={styles.buttonRow}>
-            <TouchableOpacity 
-              style={styles.uploadButton} 
-              onPress={pickImage}
-              disabled={uploading}
-            >
+            <TouchableOpacity style={styles.uploadButton} onPress={pickImage} disabled={uploading}>
               {uploading ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (
@@ -353,11 +321,7 @@ const Events = () => {
                 </>
               )}
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.uploadButton, { backgroundColor: "#007AFF" }]} 
-              onPress={pickVideo}
-              disabled={uploading}
-            >
+            <TouchableOpacity style={[styles.uploadButton, { backgroundColor: "#007AFF" }]} onPress={pickVideo} disabled={uploading}>
               {uploading ? (
                 <ActivityIndicator color="white" size="small" />
               ) : (

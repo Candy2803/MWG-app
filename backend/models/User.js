@@ -17,6 +17,8 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+
+
 // Password reset functionality validation
 UserSchema.methods.verifyPassword = function(password) {
   return bcrypt.compareSync(password, this.password);

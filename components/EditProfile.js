@@ -69,7 +69,7 @@ const EditProfile = ({ navigation }) => {
   
       // Upload to Cloudinary via your server
       const uploadResponse = await axios.post(
-        "http://192.168.0.107:5000/uploadProfilePicture",
+        "https://mwg-app-api.vercel.app/uploadProfilePicture",
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
@@ -79,7 +79,7 @@ const EditProfile = ({ navigation }) => {
         
         // Update user profile with new image URL
         const updateResponse = await axios.put(
-          `http://192.168.0.107:5000/api/users/${user._id}`,
+          `https://mwg-app-api.vercel.app/api/users/${user._id}`,
           { profileImage: newImageUrl },
           { headers: { "Content-Type": "application/json" } }
         );
@@ -126,7 +126,7 @@ const EditProfile = ({ navigation }) => {
   
       // Make API call to update user in database
       const response = await axios.put(
-        `http://192.168.0.107:5000/api/users/${user._id}/update`,
+        `https://mwg-app-api.vercel.app/api/users/${user._id}/update`,
         updatedProfile,
         {
           headers: { 

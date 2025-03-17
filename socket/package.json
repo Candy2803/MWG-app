@@ -1,7 +1,15 @@
 {
-    "start": "node server.js",
+    "name": "socketio-server",
+    "version": "1.0.0",
+    "main": "server.js",
+    "scripts": {
+      "start": "node server.js"
+    },
     "dependencies": {
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.7",
         "express": "^4.21.2",
         "socket.io": "^4.8.1"
     }
 }
+
