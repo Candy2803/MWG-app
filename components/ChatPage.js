@@ -25,7 +25,6 @@ import { useRoute, useFocusEffect } from "@react-navigation/native";
 import { Video } from "expo-av";
 import { BlurView } from "expo-blur";
 import Icon from "react-native-vector-icons/Ionicons";
-import { useNotifications } from '../hooks/useNotifications';
 
 
 const ChatPage = () => {
