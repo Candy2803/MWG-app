@@ -5,11 +5,12 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { StyleSheet, SafeAreaView } from "react-native";
 import { AuthProvider, useAuth } from "./Auth/AuthContext";
 import { ChatProvider } from "./Auth/ChatContext";
+// import {ThemeContext} from "./Auth/ThemeContext";
 
 // Components
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
-import Contribution from "./components/Contribution";
+import Contribution from "./components/Contribution"; 
 import Profile from "./components/Profile";
 import Signup from "./components/Signup";
 import Login from "./components/Login";
@@ -45,104 +46,158 @@ function AppNavigator() {
       {user?.role === "admin" ? (
         // Admin Screens
         <>
-          <Stack.Screen name="Admin" component={Admin} options={{ headerShown: true, title: "Admin" }} />
+          <Stack.Screen
+            name="Admin"
+            component={Admin}
+            options={{ headerShown: true, title: "Admin" }}
+          />
           <Stack.Screen
             name="ManageUsers"
             component={ManageUsers}
-            options={({ navigation }) => CustomHeader({ title: "Manage Users", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Manage Users", navigation })
+            }
           />
           <Stack.Screen
             name="UserHomeScreen"
             component={UserHomeScreen}
-            options={({ navigation }) => CustomHeader({ title: "User Home", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "User Home", navigation })
+            }
           />
           <Stack.Screen
             name="Contribution"
             component={Contribution}
-            options={({ navigation }) => CustomHeader({ title: "Contribution", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Contribution", navigation })
+            }
           />
           <Stack.Screen
             name="Profile"
             component={Profile}
-            options={({ navigation }) => CustomHeader({ title: "Profile", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Profile", navigation })
+            }
           />
           <Stack.Screen
             name="EditProfile"
             component={EditProfile}
-            options={({ navigation }) => CustomHeader({ title: "Edit Profile", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Edit Profile", navigation })
+            }
           />
           <Stack.Screen
             name="ChatPage"
             component={ChatPage}
-            options={({ navigation }) => CustomHeader({ title: "Chat", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "ChatPage", navigation })
+            }
           />
           <Stack.Screen
             name="Settings"
             component={Settings}
-            options={({ navigation }) => CustomHeader({ title: "Settings", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Settings", navigation })
+            }
           />
           <Stack.Screen
             name="ManageContributions"
             component={ManageContributions}
-            options={({ navigation }) => CustomHeader({ title: "Manage Contributions", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Manage Contributions", navigation })
+            }
           />
           <Stack.Screen
             name="Reports"
             component={Reports}
-            options={({ navigation }) => CustomHeader({ title: "Reports", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Reports", navigation })
+            }
           />
           <Stack.Screen
             name="MoneyMarketPage"
             component={MoneyMarketPage}
-            options={({ navigation }) => CustomHeader({ title: "Money Market", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Money Market", navigation })
+            }
           />
           <Stack.Screen
             name="Events"
             component={Events}
-            options={({ navigation }) => CustomHeader({ title: "Events", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Events", navigation })
+            }
           />
           <Stack.Screen
             name="Meeting"
             component={Meeting}
-            options={({ navigation }) => CustomHeader({ title: "Meeting", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Meeting", navigation })
+            }
           />
         </>
       ) : user?.role === "user" ? (
         // User Screens
         <>
-          <Stack.Screen name="Home" component={Home} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="Home"
+            component={Home}
+            options={{ headerShown: false }}
+          />
           <Stack.Screen
             name="Contribution"
             component={Contribution}
-            options={({ navigation }) => CustomHeader({ title: "Contribution", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Contribution", navigation })
+            }
           />
           <Stack.Screen
             name="Profile"
             component={Profile}
-            options={({ navigation }) => CustomHeader({ title: "Profile", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Profile", navigation })
+            }
           />
           <Stack.Screen
             name="EditProfile"
             component={EditProfile}
-            options={({ navigation }) => CustomHeader({ title: "Edit Profile", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Edit Profile", navigation })
+            }
           />
           <Stack.Screen
-            name="Chat"
+            name="ChatPage"
             component={ChatPage}
-            options={({ navigation }) => CustomHeader({ title: "Chat", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "ChatPage", navigation })
+            }
           />
           <Stack.Screen
             name="Settings"
             component={Settings}
-            options={({ navigation }) => CustomHeader({ title: "Settings", navigation })}
+            options={({ navigation }) =>
+              CustomHeader({ title: "Settings", navigation })
+            }
           />
         </>
       ) : (
         // Auth Screens (Login/Signup/ForgotPassword)
         <>
-          <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
-          <Stack.Screen name="Signup" component={Signup} options={{ headerShown: false }} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPassword} options={{ headerShown: false }} />
+          <Stack.Screen
+            name="Login"
+            component={Login}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="Signup"
+            component={Signup}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPassword}
+            options={{ headerShown: false }}
+          />
         </>
       )}
     </Stack.Navigator>

@@ -25,6 +25,8 @@ const ManageUsers = () => {
   const navigation = useNavigation();
   const [impersonatingUser, setImpersonatingUser] = useState(null);
   const { impersonateUser } = useAuth();
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [editedName, setEditedName] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -50,34 +52,39 @@ const ManageUsers = () => {
       const response = await axios.put(`${BASE_URL}/users/${id}`, updatedUser);
       setUsers(users.map((user) => (user._id === id ? response.data : user)));
       Alert.alert("Success", `User ${updatedUser.name} updated successfully`);
+    
+     
+  
+      if (response.status === 200) {
+        
+        setEditingUserId(null);
+        setEditedName("");
+      } else {
+        console.error('Error editing user:', response.statusText);
+      }
     } catch (error) {
-      console.error("Error updating user:", error);
-      Alert.alert("Error", "Failed to update user");
+      console.error('Error editing user:', error.message);
     }
   };
 
   const handleDelete = (id, name) => {
-    Alert.alert(
-      "Confirm Delete",
-      `Are you sure you want to delete ${name}?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await axios.delete(`${BASE_URL}/users/${id}`);
-              setUsers(users.filter((user) => user._id !== id));
-              Alert.alert("Success", "User deleted successfully");
-            } catch (error) {
-              console.error("Error deleting user:", error);
-              Alert.alert("Error", "Failed to delete user");
-            }
-          },
+    Alert.alert("Confirm Delete", `Are you sure you want to delete ${name}?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await axios.delete(`${BASE_URL}/users/${id}`);
+            setUsers(users.filter((user) => user._id !== id));
+            Alert.alert("Success", "User deleted successfully");
+          } catch (error) {
+            console.error("Error deleting user:", error);
+            Alert.alert("Error", "Failed to delete user");
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleImpersonate = async (user) => {
@@ -119,10 +126,7 @@ const ManageUsers = () => {
   const renderUserRow = (user, index) => (
     <View
       key={user._id}
-      style={[
-        styles.row,
-        index % 2 === 0 ? styles.evenRow : styles.oddRow,
-      ]}
+      style={[styles.row, index % 2 === 0 ? styles.evenRow : styles.oddRow]}
     >
       <TextInput
         style={styles.cell}
@@ -147,23 +151,23 @@ const ManageUsers = () => {
         )}
       </View>
       <View style={styles.actions}>
-        <TouchableOpacity 
-          style={styles.actionButton} 
+        <TouchableOpacity
+          style={styles.actionButton}
           onPress={() => handleEdit(user._id, index)}
         >
           <Icon name="save" size={22} color="#4CAF50" />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.actionButton} 
+
+        <TouchableOpacity
+          style={styles.actionButton}
           onPress={() => handleDelete(user._id, user.name)}
         >
           <Icon name="delete" size={22} color="#F44336" />
         </TouchableOpacity>
 
         {user.role !== "admin" ? (
-          <TouchableOpacity 
-            style={styles.actionButton} 
+          <TouchableOpacity
+            style={styles.actionButton}
             onPress={() => handleImpersonate(user)}
           >
             <Icon name="person" size={22} color="#2196F3" />
@@ -174,14 +178,14 @@ const ManageUsers = () => {
           </View>
         )}
 
-        <TouchableOpacity 
-          style={styles.actionButton} 
+        <TouchableOpacity
+          style={styles.actionButton}
           onPress={() => handleApprove(user._id)}
         >
-          <Icon 
-            name={user.isApproved ? "check-circle" : "pending"} 
-            size={22} 
-            color={user.isApproved ? "#4CAF50" : "#FF9800"} 
+          <Icon
+            name={user.isApproved ? "check-circle" : "pending"}
+            size={22}
+            color={user.isApproved ? "#4CAF50" : "#FF9800"}
           />
         </TouchableOpacity>
       </View>
@@ -200,14 +204,14 @@ const ManageUsers = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      
+
       {impersonatingUser && (
         <View style={styles.impersonationBanner}>
           <Icon name="account-circle" size={20} color="#fff" />
           <Text style={styles.impersonationText}>
             Impersonating: {impersonatingUser.name}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => {
               setImpersonatingUser(null);
               navigation.goBack();
@@ -218,7 +222,7 @@ const ManageUsers = () => {
           </TouchableOpacity>
         </View>
       )}
-      
+
       <View style={styles.headerContainer}>
         <Text style={styles.message}>Admin Dashboard</Text>
         <View style={styles.statsContainer}>
@@ -228,13 +232,13 @@ const ManageUsers = () => {
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>
-              {users.filter(user => user.isApproved).length}
+              {users.filter((user) => user.isApproved).length}
             </Text>
             <Text style={styles.statLabel}>Approved</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statValue}>
-              {users.filter(user => !user.isApproved).length}
+              {users.filter((user) => !user.isApproved).length}
             </Text>
             <Text style={styles.statLabel}>Pending</Text>
           </View>
@@ -341,7 +345,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 15,
     color: "#fff",
-    textAlign: 'center',
+    textAlign: "center",
   },
   scrollView: {
     flex: 1,
@@ -460,6 +464,94 @@ const styles = StyleSheet.create({
     padding: 20,
     color: "#757575",
     fontStyle: "italic",
+    color: "#333",
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff",
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  roleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  roleInput: {
+    flex: 1,
+  },
+  approvedBadge: {
+    marginLeft: 8,
+    backgroundColor: "#4CAF50",
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  approvedBadgeText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  actionButton: {
+    marginHorizontal: 6,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#757575",
+  },
+  errorContainer: {
+    padding: 16,
+    backgroundColor: "#ffcccb",
+    borderRadius: 8,
+    margin: 8,
+  },
+  errorText: {
+    color: "#d32f2f",
+    fontSize: 16,
+  },
+  retryButton: {
+    marginTop: 10,
+    backgroundColor: "#d32f2f",
+    padding: 10,
+    borderRadius: 6,
+    alignItems: "center",
+  },
+  retryButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  impersonationBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#2196F3",
+    padding: 8,
+    justifyContent: "space-between",
+  },
+  impersonationText: {
+    color: "#fff",
+    marginLeft: 10,
+  },
+  exitButton: {
+    padding: 6,
+    backgroundColor: "#f44336",
+    borderRadius: 4,
+  },
+  exitButtonText: {
+    color: "#fff",
+  },
+  noDataText: {
+    textAlign: "center",
+    marginVertical: 20,
+    color: "#757575",
   },
 });
 

@@ -68,7 +68,13 @@ router.get("/:userId/contributions", async (req, res) => {
     if (!user) {
       return res.status(404).send({ message: "User not found" });
     }
-
+    if (user.expoPushToken && user.pushNotificationsEnabled) {
+      await sendPushNotification(
+        user.expoPushToken,
+        'Contribution Received',
+        `Your contribution of ${amount} has been received successfully`
+      );
+    }
     const contributions = await Contribution.find({ userId }).populate(
       "userId",
       "name"
@@ -98,8 +104,8 @@ router.get("/:userId/contributions", async (req, res) => {
 const transporter = nodemailer.createTransport({
   service: "gmail", 
   auth: {
-    user: "candyjessie2@gmail.com", 
-    pass: "ysep jmor nhos fich", 
+    user: "mwarighaswelfare@gmail.com", 
+    pass: "yock vqdb gwod vbf", 
   },
 });
 

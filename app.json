@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "myApp",
+    "name": "MWG app",
     "slug": "myApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/mwg.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/mwg.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -34,5 +34,6 @@
         "projectId": "a5211474-e485-49ba-a0f3-640f7996f240"
       }
     }
+    
   }
 }

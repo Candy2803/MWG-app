@@ -64,15 +64,15 @@ const Admin = () => {
       <ScrollView style={styles.mainContainer} contentContainerStyle={styles.scrollContent}>
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>152</Text>
+            <Text style={styles.statNumber}>17</Text>
             <Text style={styles.statLabel}>Users</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>87</Text>
+            <Text style={styles.statNumber}>187</Text>
             <Text style={styles.statLabel}>Contributions</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statNumber}>24</Text>
+            <Text style={styles.statNumber}>0</Text>
             <Text style={styles.statLabel}>Pending</Text>
           </View>
         </View>

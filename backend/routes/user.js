@@ -18,6 +18,30 @@ router.get('/', async (req, res) => {
   }
 });
 
+
+const sendPushNotification = async (expoPushToken, title, body, data = {}) => {
+  try {
+    const message = {
+      to: expoPushToken,
+      sound: 'default',
+      title,
+      body,
+      data,
+    };
+
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
+  } catch (error) {
+    console.error('Error sending push notification:', error);
+  }
+};
 // In your routes file (for example, userRoutes.js)
 router.put('/:id', async (req, res) => {
   try {
@@ -145,8 +169,8 @@ router.put('/:id', async (req, res) => {
 const transporter = nodemailer.createTransport({
   service: 'gmail', // or any other email service you want to use
   auth: {
-    user: 'candyjessie2@gmail.com', // Your email address
-    pass: 'ysep jmor nhos fich', // Your email password or app-specific password
+    user: 'mwarighaswelfare@gmail.com', // Your email address
+    pass: 'yock vqdb gwod vbf', // Your email password or app-specific password
   },
 });
 
@@ -192,7 +216,7 @@ router.post('/register', async (req, res) => {
     await contribution.save();
 
     const mailOptions = {
-      from: 'your-email@gmail.com', 
+      from: 'mwarighaswelfare@gmail.com', 
       to: email, 
       subject: 'ACCOUNT CREATED SUCCESSFULLY - AWAITING APPROVAL',
       text: `Dear ${name},\n\nYour account has been created successfully and is awaiting approval from the admin. You will be notified once your account is approved.\n\nBest regards,\nMWG Team`,
@@ -205,6 +229,14 @@ router.post('/register', async (req, res) => {
         console.log('Email sent:', info.response);
       }
     });
+    const admin = await User.findOne({ role: 'admin' });
+    if (admin?.expoPushToken) {
+      await sendPushNotification(
+        admin.expoPushToken,
+        'New User Registration',
+        `${name} has registered and is awaiting approval`
+      );
+    }
 
     res.status(201).send({ message: 'User registered successfully, pending admin approval', user: savedUser, contribution });
   } catch (error) {
@@ -255,7 +287,7 @@ router.put('/:id/approve', async (req, res) => {
 
     if (user) {
       const mailOptions = {
-        from: 'your-email@gmail.com', 
+        from: 'mwarighaswelfare@gmail.com', 
         to: user.email, 
         subject: 'ACCOUNT APPROVED',
         text: `Dear ${user.name},\n\nYour account has been approved by the admin. You can now log in to your account and start using the platform.\n\nBest regards,\nMWG Team`,

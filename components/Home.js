@@ -138,7 +138,7 @@ const Home = ({ navigation }) => {
 
               <TouchableOpacity 
                 style={styles.card}
-                onPress={() => navigation.navigate('Chat')}
+                onPress={() => navigation.navigate('ChatPage')}
                 activeOpacity={0.9}
               >
                 <LinearGradient

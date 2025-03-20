@@ -12,6 +12,7 @@ import {
 import Icon from "react-native-vector-icons/Ionicons";
 import { useAuth } from "../Auth/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from 'expo-notifications';
 
 const Settings = ({ navigation }) => {
   const { user } = useAuth();
@@ -34,10 +35,40 @@ const Settings = ({ navigation }) => {
   };
 
   // Toggle handlers
-  const togglePushNotifications = (value) => {
+  // In Settings.js, update the togglePushNotifications function
+const togglePushNotifications = async (value) => {
+  try {
     setPushNotifications(value);
     saveSettings("pushNotifications", value);
-  };
+    
+    if (value) {
+      // Request permissions if enabling notifications
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required',
+          'Push notifications require permission to be enabled'
+        );
+        setPushNotifications(false);
+        return;
+      }
+    }
+
+    // Update user preferences in backend
+    await fetch(`/api/users/${user._id}/update`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pushNotificationsEnabled: value
+      }),
+    });
+  } catch (error) {
+    console.error('Error updating notification preferences:', error);
+    Alert.alert('Error', 'Failed to update notification preferences');
+  }
+};
 
   const toggleEmailNotifications = (value) => {
     setEmailNotifications(value);
